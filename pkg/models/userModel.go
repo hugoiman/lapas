@@ -21,7 +21,7 @@ type User struct {
 
 // Users is User List
 type Users struct {
-	Users []User `json:"users"`
+	Users []User `json:"user"`
 }
 
 // GetUser is function
