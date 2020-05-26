@@ -31,6 +31,8 @@ func main() {
 	router.HandleFunc("/survei/{idSurvei}", controllers.UpdateSurvei).Methods("PUT")
 	router.HandleFunc("/survei-duplikasi/{idSurvei}", controllers.DuplicateSurvei).Methods("POST")
 
+	router.HandleFunc("/jawaban/{idSurvei}/{idUser}", controllers.SaveJawaban).Methods("POST")
+
 	fmt.Println("Server running at: 5000")
 	log.Fatal(http.ListenAndServe(":5000", handlers.CORS(origins)(router)))
 
