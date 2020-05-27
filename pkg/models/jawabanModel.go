@@ -21,7 +21,7 @@ type Jawabans struct {
 func GetJawaban(idSurvei, idUser string) Jawabans {
 	con := db.Connect()
 	query := "SELECT a.idJawaban, a.idUser, a.idSoal, a.jawaban FROM jawaban a JOIN soal b ON a.idSoal = b.idSoal WHERE a.idUser = ? AND b.idSurvei = ?"
-	rows, _ := con.Query(query, idSurvei, idUser)
+	rows, _ := con.Query(query, idUser, idSurvei)
 
 	jawaban := Jawaban{}
 	jawabans := Jawabans{}
@@ -37,9 +37,18 @@ func GetJawaban(idSurvei, idUser string) Jawabans {
 }
 
 // CreateJawaban is new save new jawaban
-func CreateJawaban(idUser, jawaban Jawaban) {
+func CreateJawaban(idUser string, jawaban Jawaban) {
 	con := db.Connect()
 	_, _ = con.Exec("INSERT INTO jawaban (idUser, idSoal, jawaban) VALUES (?,?,?)", idUser, jawaban.IDSoal, jawaban.Jawaban)
+
+	defer con.Close()
+}
+
+// UpdateJawaban is edit Jawaban
+func UpdateJawaban(jawaban Jawaban) {
+	con := db.Connect()
+	query := "UPDATE jawaban SET jawaban = ? WHERE idJawaban = ?"
+	_, _ = con.Exec(query, jawaban.Jawaban, jawaban.IDJawaban)
 
 	defer con.Close()
 }
