@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	models "lapas/pkg/models"
 	"net/http"
 
@@ -82,20 +81,19 @@ loop:
 
 	// survei sudah pernah diisi?
 	var message string
-	getJawaban := models.GetJawaban(idSurvei, idUser)
-	if len(getJawaban.Jawabans) == 0 {
+	oldJawaban := models.GetJawaban(idSurvei, idUser)
+	if len(oldJawaban.Jawabans) == 0 {
 		for _, v := range jawaban.Jawabans {
-			fmt.Printf("%+v", v)
-			// models.CreateJawaban(idUser, v)
+			models.CreateJawaban(idUser, v)
 		}
-		message = `{"message":"Simpan!"}`
+		message = `{"message":"Tanggapan Anda telah disimpan."}`
 	} else {
-		success, message := UpdateJawaban(idUser, idSurvei, jawaban, getJawaban)
-		// models.UpdateJawaban(jawaban)
+		success, msg := UpdateJawaban(jawaban, oldJawaban)
 		if success == false {
-			http.Error(w, message, http.StatusInternalServerError)
+			http.Error(w, msg, http.StatusInternalServerError)
 			return
 		}
+		message = `{"message":"` + msg + `"}`
 	}
 
 	w.Header().Set("Content-type", "application/json")
@@ -104,7 +102,7 @@ loop:
 }
 
 // UpdateJawaban is edit jawaban
-func UpdateJawaban(idUser, idSurvei string, newJawaban models.Jawabans, oldJawaban models.Jawabans) (bool, string) {
+func UpdateJawaban(newJawaban models.Jawabans, oldJawaban models.Jawabans) (bool, string) {
 	idNewJawaban := make([]int, 0)
 	for _, v := range newJawaban.Jawabans {
 		idNewJawaban = append(idNewJawaban, v.IDJawaban)
@@ -116,7 +114,7 @@ func UpdateJawaban(idUser, idSurvei string, newJawaban models.Jawabans, oldJawab
 	for i := 0; i < totalID; i++ {
 		for j := i + 1; j < totalID; j++ {
 			if idNewJawaban[i] == idNewJawaban[j] {
-				message := "Gagal! Ditemukan duplikasi jawaban!"
+				message := "Gagal! Ditemukan duplikasi id jawaban!"
 				return false, message
 			}
 		}
@@ -142,14 +140,13 @@ loop:
 	}
 
 	if sameID == false {
-		message := "Gagal! Terdapt ID jawaban tidak sesuai dengan yang ada!"
+		message := "Gagal! Terdapat ID jawaban tidak sesuai dengan yang ada!"
 		return false, message
 	}
 
 	for _, v := range newJawaban.Jawabans {
-		fmt.Printf("%+v", v)
-		// models.UpdateJawaban(v)
+		models.UpdateJawaban(v)
 	}
 
-	return true, "Jawaban berhasil di simpan"
+	return true, "Jawaban Anda telah diperbarui!"
 }
