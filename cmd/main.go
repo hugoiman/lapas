@@ -30,8 +30,13 @@ func main() {
 	router.HandleFunc("/survei/{idSurvei}", controllers.DeleteSurvei).Methods("DELETE")
 	router.HandleFunc("/survei/{idSurvei}", controllers.UpdateSurvei).Methods("PUT")
 	router.HandleFunc("/survei-duplikasi/{idSurvei}", controllers.DuplicateSurvei).Methods("POST")
+	router.HandleFunc("/survei-status/{idSurvei}", controllers.ChangeStatus).Methods("PUT")
+	router.HandleFunc("/survei-statistik-responden/{idSurvei}", controllers.GetStatistikResponden).Methods("GET")
+	router.HandleFunc("/survei-statistik-survei/{idSurvei}/{direktorat}", controllers.GetStatistikJawaban).Methods("GET")
+	router.HandleFunc("/survei-responden/{idSurvei}", controllers.GetDataResponden).Methods("GET")
 
 	//	Jawaban
+	router.HandleFunc("/jawaban/{idSurvei}/{idUser}", controllers.GetTanggapan).Methods("GET")
 	router.HandleFunc("/jawaban/{idSurvei}/{idUser}", controllers.SaveJawaban).Methods("POST")
 
 	//	Evaluasi

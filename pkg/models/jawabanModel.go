@@ -6,10 +6,12 @@ import (
 
 // Jawaban is jawaban survei
 type Jawaban struct {
-	IDJawaban int `json:"idJawaban"`
-	IDUser    int `json:"idUser"`
-	IDSoal    int `json:"idSoal" validate:"required"`
-	Jawaban   int `json:"jawaban" validate:"required,gte=1,lte=5"`
+	IDJawaban int    `json:"idJawaban"`
+	IDUser    int    `json:"idUser"`
+	IDSoal    int    `json:"idSoal" validate:"required"`
+	Jawaban   int    `json:"jawaban" validate:"required,gte=1,lte=5"`
+	SubSurvei string `json:"subSurvei"`
+	Nama      string `json:"nama"`
 }
 
 // Jawabans is jawaban list
@@ -51,4 +53,28 @@ func UpdateJawaban(jawaban Jawaban) {
 	_, _ = con.Exec(query, jawaban.Jawaban, jawaban.IDJawaban)
 
 	defer con.Close()
+}
+
+// GetJawabans is func
+func GetJawabans(idSurvei, direktorat string) Jawabans {
+	con := db.Connect()
+	queryDirektorat := "SELECT a.idJawaban, a.idSoal, a.jawaban, c.subSurvei, d.nama FROM jawaban a JOIN soal b ON a.idSoal = b.idSoal JOIN subsurvei c ON b.idSub = c.idSub JOIN user d ON a.idUser = d.idUser WHERE b.idSurvei = ? AND d.direktorat = ?"
+	query := "SELECT a.idJawaban, a.idSoal, a.jawaban, c.subSurvei, d.nama FROM jawaban a JOIN soal b ON a.idSoal = b.idSoal JOIN subsurvei c ON b.idSub = c.idSub JOIN user d ON a.idUser = d.idUser WHERE b.idSurvei = ?"
+	rows, _ := con.Query(query, idSurvei)
+
+	if direktorat != "semua" {
+		rows, _ = con.Query(queryDirektorat, idSurvei, direktorat)
+	}
+
+	jawaban := Jawaban{}
+	jawabans := Jawabans{}
+
+	for rows.Next() {
+		_ = rows.Scan(
+			&jawaban.IDJawaban, &jawaban.IDSoal, &jawaban.Jawaban, &jawaban.SubSurvei, &jawaban.Nama)
+		jawabans.Jawabans = append(jawabans.Jawabans, jawaban)
+	}
+
+	defer con.Close()
+	return jawabans
 }
