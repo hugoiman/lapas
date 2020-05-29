@@ -150,3 +150,17 @@ loop:
 
 	return true, "Jawaban Anda telah diperbarui!"
 }
+
+// GetTanggapan is get jawaban responden
+func GetTanggapan(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idSurvei := vars["idSurvei"]
+	idUser := vars["idUser"]
+
+	data := models.GetJawaban(idSurvei, idUser)
+	message, _ := json.Marshal(data)
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(message))
+}

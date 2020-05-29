@@ -59,7 +59,7 @@ func GetUsers() Users {
 	for rows.Next() {
 		err2 := rows.Scan(
 			&user.IDUser, &user.NIPG, &user.Nama, &user.Email,
-			&user.Pangkat, &user.Direktorat, &user.Divisi, &user.Actived, &user.TglLahir)
+			&user.Pangkat, &user.Divisi, &user.Direktorat, &user.Actived, &user.TglLahir)
 		if err2 != nil {
 			fmt.Println(err2.Error())
 		}

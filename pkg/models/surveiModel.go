@@ -138,3 +138,39 @@ func UpdateSurvei(idSurvei string, survei Survei) error {
 
 	return err
 }
+
+// ChangeStatus is func
+func ChangeStatus(idSurvei string, actived bool) {
+	con := db.Connect()
+	query := "UPDATE survei SET actived = ? WHERE idSurvei = ?"
+	_, _ = con.Exec(query, actived, idSurvei)
+
+	defer con.Close()
+}
+
+// GetDataResponden is func
+func GetDataResponden(idSurvei string) Users {
+	con := db.Connect()
+	query := "SELECT a.idUser, a.nama, a.pangkat, a.direktorat, a.tglLahir FROM user a JOIN jawaban b ON a.idUser = b.idUser JOIN soal c ON b.idSoal = c.idSoal WHERE c.idSurvei = ? GROUP BY a.idUser"
+	rows, err := con.Query(query, idSurvei)
+
+	if err != nil {
+		fmt.Println("error:", err.Error())
+	}
+
+	user := User{}
+	users := Users{}
+
+	for rows.Next() {
+		err = rows.Scan(
+			&user.IDUser, &user.Nama, &user.Pangkat, &user.Direktorat, &user.TglLahir)
+		users.Users = append(users.Users, user)
+
+		if err != nil {
+			fmt.Println("error2:", err.Error())
+		}
+	}
+
+	defer con.Close()
+	return users
+}
