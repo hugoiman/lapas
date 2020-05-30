@@ -35,6 +35,11 @@ func main() {
 	router.HandleFunc("/survei-statistik-survei/{idSurvei}/{direktorat}", controllers.GetStatistikJawaban).Methods("GET")
 	router.HandleFunc("/survei-responden/{idSurvei}", controllers.GetDataResponden).Methods("GET")
 
+	// Sub Survei
+	router.HandleFunc("/subsurvei", controllers.GetSubSurvei).Methods("GET")
+	router.HandleFunc("/subsurvei", controllers.CreateSubSurvei).Methods("POST")
+	router.HandleFunc("/subsurvei/{idSub}", controllers.DeleteSubSurvei).Methods("DELETE")
+
 	//	Jawaban
 	router.HandleFunc("/jawaban/{idSurvei}/{idUser}", controllers.GetTanggapan).Methods("GET")
 	router.HandleFunc("/jawaban/{idSurvei}/{idUser}", controllers.SaveJawaban).Methods("POST")
