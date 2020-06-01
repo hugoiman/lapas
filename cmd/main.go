@@ -49,6 +49,13 @@ func main() {
 	router.HandleFunc("/evaluasi", controllers.CreateEvaluasi).Methods("POST")
 	router.HandleFunc("/evaluasi/{idEvaluasi}", controllers.UpdateEvaluasi).Methods("PUT")
 
+	//	Laporan
+	router.HandleFunc("/laporan/{idLaporan}", controllers.GetLaporan).Methods("GET")
+	router.HandleFunc("/laporan", controllers.GetLaporans).Methods("GET")
+	router.HandleFunc("/mylaporan/{idUser}", controllers.GetMyLaporan).Methods("GET")
+	router.HandleFunc("/laporan", controllers.CreateLaporan).Methods("POST")
+	router.HandleFunc("/tanggapan/{idLaporan}", controllers.CreateTanggapan).Methods("POST")
+
 	fmt.Println("Server running at: 5000")
 	log.Fatal(http.ListenAndServe(":5000", handlers.CORS(origins)(router)))
 
