@@ -17,10 +17,10 @@ func SaveJawaban(w http.ResponseWriter, r *http.Request) {
 
 	var jawaban models.Jawabans
 	if err := json.NewDecoder(r.Body).Decode(&jawaban); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	} else if err := validator.New().Struct(jawaban); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -35,7 +35,7 @@ func SaveJawaban(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < totalID; i++ {
 		for j := i + 1; j < totalID; j++ {
 			if idSoal[i] == idSoal[j] {
-				http.Error(w, "Gagal! Ditemukan duplikasi soal!", http.StatusInternalServerError)
+				http.Error(w, "Gagal! Ditemukan duplikasi soal!", http.StatusBadRequest)
 				return
 			}
 		}
@@ -44,14 +44,14 @@ func SaveJawaban(w http.ResponseWriter, r *http.Request) {
 	// survei ditemukan?
 	survei, err := models.GetSurvei(idSurvei)
 	if err != nil {
-		http.Error(w, "Gagal! Survei tidak ditemukan!", http.StatusInternalServerError)
+		http.Error(w, "Gagal! Survei tidak ditemukan!", http.StatusBadRequest)
 		return
 	}
 
 	// jumlah jawaban sama dengan soal?
 	totalSoal := len(survei.Soal)
 	if totalID != totalSoal {
-		http.Error(w, "Gagal! Jumlah jawaban berbeda dari soal survei!", http.StatusInternalServerError)
+		http.Error(w, "Gagal! Jumlah jawaban berbeda dari soal survei!", http.StatusBadRequest)
 		return
 	}
 
@@ -75,7 +75,7 @@ loop:
 	}
 
 	if sameID == false {
-		http.Error(w, "Gagal! Terdapat soal yang berbeda dari soal survei!", http.StatusInternalServerError)
+		http.Error(w, "Gagal! Terdapat soal yang berbeda dari soal survei!", http.StatusBadRequest)
 		return
 	}
 
@@ -90,7 +90,7 @@ loop:
 	} else {
 		success, msg := UpdateJawaban(jawaban, oldJawaban)
 		if success == false {
-			http.Error(w, msg, http.StatusInternalServerError)
+			http.Error(w, msg, http.StatusBadRequest)
 			return
 		}
 		message = `{"message":"` + msg + `"}`

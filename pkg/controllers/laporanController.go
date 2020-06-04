@@ -18,7 +18,7 @@ func GetLaporan(w http.ResponseWriter, r *http.Request) {
 
 	data, err := models.GetLaporan(idLaporan)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError) // Laporan Not Found
+		http.Error(w, err.Error(), http.StatusBadRequest) // Laporan Not Found
 		return
 	}
 
@@ -57,11 +57,11 @@ func CreateLaporan(w http.ResponseWriter, r *http.Request) {
 	var laporan models.Laporan
 
 	if err := json.NewDecoder(r.Body).Decode(&laporan); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	} else if err := validator.New().Struct(laporan); err != nil {
 		fmt.Println()
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -70,12 +70,12 @@ func CreateLaporan(w http.ResponseWriter, r *http.Request) {
 
 	err := models.CreateLaporan(laporan)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(`{"message":"Data berhasil disimpan!"}`))
 }
 
@@ -86,10 +86,10 @@ func CreateTanggapan(w http.ResponseWriter, r *http.Request) {
 	var laporan models.Laporan
 
 	if err := json.NewDecoder(r.Body).Decode(&laporan); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	} else if laporan.Tanggapan == "" || laporan.Status == "" {
-		http.Error(w, "Gagal! Harap mengisi tanggapan", http.StatusInternalServerError)
+		http.Error(w, "Gagal! Harap mengisi tanggapan", http.StatusBadRequest)
 		return
 	}
 
@@ -97,7 +97,7 @@ func CreateTanggapan(w http.ResponseWriter, r *http.Request) {
 
 	numRows := models.CreateTanggapan(idLaporan, laporan)
 	if numRows == 0 {
-		http.Error(w, "Gagal! Laporan tidak ditemukan.", http.StatusInternalServerError)
+		http.Error(w, "Gagal! Laporan tidak ditemukan.", http.StatusBadRequest)
 		return
 	}
 

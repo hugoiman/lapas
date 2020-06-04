@@ -23,17 +23,17 @@ func GetSubSurvei(w http.ResponseWriter, r *http.Request) {
 func CreateSubSurvei(w http.ResponseWriter, r *http.Request) {
 	var sub models.SubSurvei
 	if err := json.NewDecoder(r.Body).Decode(&sub); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	} else if err := validator.New().Struct(sub); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	models.CreateSubSurvei(sub)
 
 	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(`{"message":"Data berhasil disimpan!"}`))
 }
 
@@ -44,7 +44,7 @@ func DeleteSubSurvei(w http.ResponseWriter, r *http.Request) {
 
 	numRows := models.DeleteSubSurvei(idSub)
 	if numRows == 0 {
-		http.Error(w, "Gagal! Survei tidak ditemukan.", http.StatusInternalServerError)
+		http.Error(w, "Gagal! Survei tidak ditemukan.", http.StatusBadRequest)
 		return
 	}
 
