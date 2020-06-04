@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/dgrijalva/jwt-go"
+  packages = ["."]
+  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
+  version = "v3.2.0"
+
+[[projects]]
   name = "github.com/go-playground/locales"
   packages = [".","currency"]
   revision = "9f105231d3a5f6877a2bf8321dfa15ea6f844b1b"
@@ -46,6 +52,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c6dcf63e70c16d37254310fe5caf3e991536f13e44a860bffa1ecb997977db6f"
+  inputs-digest = "a17cfaca505630fdc62be6aa841de75641a583beb7d492e7548fc281cd78d832"
   solver-name = "gps-cdcl"
   solver-version = 1

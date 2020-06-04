@@ -32,7 +32,7 @@ func GetUser(idUser string) User {
 	user := User{}
 	err := con.QueryRow(query, idUser).Scan(
 		&user.IDUser, &user.NIPG, &user.Nama, &user.Email,
-		&user.Pangkat, &user.Direktorat, &user.Divisi, &user.Actived)
+		&user.Pangkat, &user.Divisi, &user.Direktorat, &user.Actived)
 
 	if err != nil {
 		fmt.Print(err.Error())

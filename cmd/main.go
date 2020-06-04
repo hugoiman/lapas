@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 
+	mw "lapas/middleware"
+
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
@@ -14,47 +16,53 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	origins := handlers.AllowedOrigins([]string{"*"})
 
+	//	Login
+	router.HandleFunc("/login", controllers.Login).Methods("POST")
+
+	api := router.PathPrefix("").Subrouter()
+	api.Use(mw.AuthToken)
+
 	//	User
-	router.HandleFunc("/user/{idUser}", controllers.GetUser).Methods("GET")
-	router.HandleFunc("/user", controllers.GetUsers).Methods("GET")
-	router.HandleFunc("/user", controllers.CreateUser).Methods("POST")
-	router.HandleFunc("/user/{idUser}", controllers.UpdateUser).Methods("PUT")
-	router.HandleFunc("/password", controllers.ResetPassword).Methods("POST")
-	router.HandleFunc("/password/{idUser}", controllers.ChangePassword).Methods("PUT")
+	api.HandleFunc("/user/{idUser}", controllers.GetUser).Methods("GET")
+	api.HandleFunc("/user", mw.IsIT(controllers.GetUsers)).Methods("GET")
+	api.HandleFunc("/user", mw.IsIT(controllers.CreateUser)).Methods("POST")
+	api.HandleFunc("/user/{idUser}", mw.IsIT(controllers.UpdateUser)).Methods("PUT")
+	api.HandleFunc("/password", mw.IsIT(controllers.ResetPassword)).Methods("POST")
+	api.HandleFunc("/password/{idUser}", controllers.ChangePassword).Methods("PUT")
 
 	//	Survei
-	router.HandleFunc("/survei-detail/{slug}", controllers.GetSurvei).Methods("GET")
-	router.HandleFunc("/survei/{slug}", controllers.GetSurveiActived).Methods("GET")
-	router.HandleFunc("/survei", controllers.GetSurveis).Methods("GET")
-	router.HandleFunc("/survei", controllers.CreateSurvei).Methods("POST")
-	router.HandleFunc("/survei/{idSurvei}", controllers.DeleteSurvei).Methods("DELETE")
-	router.HandleFunc("/survei/{idSurvei}", controllers.UpdateSurvei).Methods("PUT")
-	router.HandleFunc("/survei-duplikasi/{idSurvei}", controllers.DuplicateSurvei).Methods("POST")
-	router.HandleFunc("/survei-status/{idSurvei}", controllers.ChangeStatus).Methods("PUT")
-	router.HandleFunc("/survei-statistik-responden/{idSurvei}", controllers.GetStatistikResponden).Methods("GET")
-	router.HandleFunc("/survei-statistik-survei/{idSurvei}/{direktorat}", controllers.GetStatistikJawaban).Methods("GET")
-	router.HandleFunc("/survei-responden/{idSurvei}", controllers.GetDataResponden).Methods("GET")
+	api.HandleFunc("/survei-detail/{slug}", mw.IsSDM(controllers.GetSurvei)).Methods("GET")
+	api.HandleFunc("/survei/{slug}", controllers.GetSurveiActived).Methods("GET")
+	api.HandleFunc("/survei", controllers.GetSurveis).Methods("GET")
+	api.HandleFunc("/survei", mw.IsSDM(controllers.CreateSurvei)).Methods("POST")
+	api.HandleFunc("/survei/{idSurvei}", mw.IsSDM(controllers.DeleteSurvei)).Methods("DELETE")
+	api.HandleFunc("/survei/{idSurvei}", mw.IsSDM(controllers.UpdateSurvei)).Methods("PUT")
+	api.HandleFunc("/survei-duplikasi/{idSurvei}", mw.IsSDM(controllers.DuplicateSurvei)).Methods("POST")
+	api.HandleFunc("/survei-status/{idSurvei}", mw.IsSDM(controllers.ChangeStatus)).Methods("PUT")
+	api.HandleFunc("/survei-statistik-responden/{idSurvei}", controllers.GetStatistikResponden).Methods("GET")
+	api.HandleFunc("/survei-statistik-survei/{idSurvei}/{direktorat}", controllers.GetStatistikJawaban).Methods("GET")
+	api.HandleFunc("/survei-responden/{idSurvei}", mw.IsSDM(controllers.GetDataResponden)).Methods("GET")
 
 	// Sub Survei
-	router.HandleFunc("/subsurvei", controllers.GetSubSurvei).Methods("GET")
-	router.HandleFunc("/subsurvei", controllers.CreateSubSurvei).Methods("POST")
-	router.HandleFunc("/subsurvei/{idSub}", controllers.DeleteSubSurvei).Methods("DELETE")
+	api.HandleFunc("/subsurvei", controllers.GetSubSurvei).Methods("GET")
+	api.HandleFunc("/subsurvei", mw.IsSDM(controllers.CreateSubSurvei)).Methods("POST")
+	api.HandleFunc("/subsurvei/{idSub}", mw.IsSDM(controllers.DeleteSubSurvei)).Methods("DELETE")
 
 	//	Jawaban
-	router.HandleFunc("/jawaban/{idSurvei}/{idUser}", controllers.GetTanggapan).Methods("GET")
-	router.HandleFunc("/jawaban/{idSurvei}/{idUser}", controllers.SaveJawaban).Methods("POST")
+	api.HandleFunc("/jawaban/{idSurvei}/{idUser}", controllers.GetTanggapan).Methods("GET")
+	api.HandleFunc("/jawaban/{idSurvei}/{idUser}", controllers.SaveJawaban).Methods("POST")
 
 	//	Evaluasi
-	router.HandleFunc("/evaluasi/{idSurvei}", controllers.GetEvaluasi).Methods("GET")
-	router.HandleFunc("/evaluasi", controllers.CreateEvaluasi).Methods("POST")
-	router.HandleFunc("/evaluasi/{idEvaluasi}", controllers.UpdateEvaluasi).Methods("PUT")
+	api.HandleFunc("/evaluasi/{idSurvei}", controllers.GetEvaluasi).Methods("GET")
+	api.HandleFunc("/evaluasi", mw.IsSDM(controllers.CreateEvaluasi)).Methods("POST")
+	api.HandleFunc("/evaluasi/{idEvaluasi}", mw.IsSDM(controllers.UpdateEvaluasi)).Methods("PUT")
 
 	//	Laporan
-	router.HandleFunc("/laporan/{idLaporan}", controllers.GetLaporan).Methods("GET")
-	router.HandleFunc("/laporan", controllers.GetLaporans).Methods("GET")
-	router.HandleFunc("/mylaporan/{idUser}", controllers.GetMyLaporan).Methods("GET")
-	router.HandleFunc("/laporan", controllers.CreateLaporan).Methods("POST")
-	router.HandleFunc("/tanggapan/{idLaporan}", controllers.CreateTanggapan).Methods("POST")
+	api.HandleFunc("/laporan/{idLaporan}", controllers.GetLaporan).Methods("GET")
+	api.HandleFunc("/laporan", mw.IsSDM(controllers.GetLaporans)).Methods("GET")
+	api.HandleFunc("/mylaporan/{idUser}", controllers.GetMyLaporan).Methods("GET")
+	api.HandleFunc("/laporan", controllers.CreateLaporan).Methods("POST")
+	api.HandleFunc("/tanggapan/{idLaporan}", mw.IsSDM(controllers.CreateTanggapan)).Methods("POST")
 
 	fmt.Println("Server running at: 5000")
 	log.Fatal(http.ListenAndServe(":5000", handlers.CORS(origins)(router)))
