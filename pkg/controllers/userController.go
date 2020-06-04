@@ -17,11 +17,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idUser := vars["idUser"]
 	data := models.GetUser(idUser)
-	message, err := json.Marshal(data)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	message, _ := json.Marshal(data)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -31,11 +27,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 // GetUsers is function
 func GetUsers(w http.ResponseWriter, r *http.Request) {
 	data := models.GetUsers()
-	message, err := json.Marshal(data)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	message, _ := json.Marshal(data)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -46,22 +38,22 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	// fmt.Printf("%+v\n", user)
 
 	if err := validator.New().Struct(user); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if err := models.CreateUser(user); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(`{"message":"Data berhasil disimpan!"}`))
 }
 
@@ -72,17 +64,17 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	idUser := vars["idUser"]
 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if err := validator.New().Struct(user); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if err := models.UpdateUser(idUser, user); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -100,10 +92,10 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&data)
 
 	if err := validator.New().Var(fmt.Sprintf("%v", data["password_baru"]), "required,min=6,max=18"); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	} else if err := validator.New().Var(fmt.Sprintf("%v", data["password_lama"]), "required,min=6,max=18"); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -113,7 +105,7 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 
 	isValid := models.CheckOldPassword(idUser, encryptedOldPass)
 	if !isValid {
-		http.Error(w, "Password lama tidak sesuai", http.StatusInternalServerError)
+		http.Error(w, "Password lama tidak sesuai", http.StatusBadRequest)
 		return
 	}
 
@@ -137,16 +129,16 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 	email := fmt.Sprintf("%v", data["email"])
 
 	if err := validator.New().Var(email, "required,email"); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	} else if err := validator.New().Var(nipg, "required"); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	_, err := models.CheckUser(nipg, email)
 	if err != nil {
-		http.Error(w, "User tidak ditemukan", http.StatusInternalServerError)
+		http.Error(w, "User tidak ditemukan", http.StatusBadRequest)
 		return
 	}
 

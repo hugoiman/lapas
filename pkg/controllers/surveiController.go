@@ -20,15 +20,11 @@ func GetSurvei(w http.ResponseWriter, r *http.Request) {
 
 	data, err := models.GetSurvei(slug)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError) // survei not found
+		http.Error(w, err.Error(), http.StatusBadRequest) // survei not found
 		return
 	}
 
-	message, err := json.Marshal(data)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	message, _ := json.Marshal(data)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -42,15 +38,11 @@ func GetSurveiActived(w http.ResponseWriter, r *http.Request) {
 
 	data, err := models.GetSurveiActived(slug)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	message, err := json.Marshal(data)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	message, _ := json.Marshal(data)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -60,11 +52,7 @@ func GetSurveiActived(w http.ResponseWriter, r *http.Request) {
 // GetSurveis is function
 func GetSurveis(w http.ResponseWriter, r *http.Request) {
 	data := models.GetSurveis()
-	message, err := json.Marshal(data)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	message, _ := json.Marshal(data)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -75,10 +63,10 @@ func GetSurveis(w http.ResponseWriter, r *http.Request) {
 func CreateSurvei(w http.ResponseWriter, r *http.Request) {
 	var survei models.Survei
 	if err := json.NewDecoder(r.Body).Decode(&survei); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	} else if err := validator.New().Struct(survei); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -90,7 +78,7 @@ func CreateSurvei(w http.ResponseWriter, r *http.Request) {
 	survei.Slug = slug
 	idSurvei, err := models.CreateSurvei(survei)
 	if err != nil {
-		http.Error(w, "Gagal! Judul dan periode yang sama pernah dibuat sebelumnya.", http.StatusInternalServerError)
+		http.Error(w, "Gagal! Judul dan periode yang sama pernah dibuat sebelumnya.", http.StatusBadRequest)
 		return
 	}
 
@@ -98,7 +86,7 @@ func CreateSurvei(w http.ResponseWriter, r *http.Request) {
 	for _, v := range survei.Soal {
 		if err = models.CreateSoal(idSurvei, v); err != nil {
 			models.DeleteSurvei(strconv.Itoa(idSurvei))
-			http.Error(w, "Gagal! Sub survei tidak terdaftar.", http.StatusInternalServerError)
+			http.Error(w, "Gagal! Sub survei tidak terdaftar.", http.StatusBadRequest)
 			return
 		}
 	}
@@ -115,7 +103,7 @@ func DeleteSurvei(w http.ResponseWriter, r *http.Request) {
 
 	numRows := models.DeleteSurvei(idSurvei)
 	if numRows == 0 {
-		http.Error(w, "Gagal! Survei tidak ditemukan.", http.StatusInternalServerError)
+		http.Error(w, "Gagal! Survei tidak ditemukan.", http.StatusBadRequest)
 		return
 	}
 
@@ -131,10 +119,10 @@ func UpdateSurvei(w http.ResponseWriter, r *http.Request) {
 
 	var survei models.Survei
 	if err := json.NewDecoder(r.Body).Decode(&survei); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	} else if err := validator.New().Struct(survei); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -146,13 +134,13 @@ func UpdateSurvei(w http.ResponseWriter, r *http.Request) {
 	survei.Slug = slug
 	err := models.UpdateSurvei(idSurvei, survei)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError) // duplicate slug or survei not found
+		http.Error(w, err.Error(), http.StatusBadRequest) // duplicate slug or survei not found
 		return
 	}
 
 	for _, v := range survei.Soal {
 		if err = models.UpdateSoal(idSurvei, v); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError) // soal not found/not same or idsurvei not found/not same
+			http.Error(w, err.Error(), http.StatusBadRequest) // soal not found/not same or idsurvei not found/not same
 			return
 		}
 	}
@@ -169,13 +157,13 @@ func DuplicateSurvei(w http.ResponseWriter, r *http.Request) {
 
 	var survei models.Survei
 	if err := json.NewDecoder(r.Body).Decode(&survei); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	} else if err := validator.New().Struct(survei); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	} else if _, err := models.GetSurvei(idSurvei); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -187,7 +175,7 @@ func DuplicateSurvei(w http.ResponseWriter, r *http.Request) {
 	survei.Slug = slug
 	idSurveiNew, err := models.CreateSurvei(survei)
 	if err != nil {
-		http.Error(w, "Gagal! Judul dan periode yang sama pernah dibuat sebelumnya.", http.StatusInternalServerError)
+		http.Error(w, "Gagal! Judul dan periode yang sama pernah dibuat sebelumnya.", http.StatusBadRequest)
 		return
 	}
 
@@ -213,7 +201,7 @@ func ChangeStatus(w http.ResponseWriter, r *http.Request) {
 
 	survei, err := models.GetSurvei(idSurvei)
 	if err != nil {
-		http.Error(w, "Gagal! Survei tidak ditemukan.", http.StatusInternalServerError) // survei not found
+		http.Error(w, "Gagal! Survei tidak ditemukan.", http.StatusBadRequest) // survei not found
 		return
 	}
 
@@ -345,7 +333,7 @@ func GetStatistikJawaban(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !isValid {
-		http.Error(w, "Gagal! Direktorat tidak terdaftar.", http.StatusInternalServerError)
+		http.Error(w, "Gagal! Direktorat tidak terdaftar.", http.StatusBadRequest)
 		return
 	}
 
