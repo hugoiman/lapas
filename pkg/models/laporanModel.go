@@ -59,8 +59,8 @@ func GetLaporans() Laporans {
 		_ = rows.Scan(
 			&laporan.IDLaporan, &laporan.Pengirim, &laporan.Subjek, &laporan.Kategori, &laporan.Pesan, &laporan.Lampiran, &laporan.Status, &tglKirim)
 
-		laporans.Laporans = append(laporans.Laporans, laporan)
 		laporan.TglKirim = tglKirim.Format("02 Jan 2006")
+		laporans.Laporans = append(laporans.Laporans, laporan)
 	}
 
 	defer con.Close()
@@ -81,8 +81,8 @@ func GetMyLaporan(idUser string) Laporans {
 		_ = rows.Scan(
 			&laporan.IDLaporan, &laporan.Subjek, &laporan.Kategori, &laporan.Pesan, &laporan.Lampiran, &laporan.Status, &tglKirim)
 
-		laporans.Laporans = append(laporans.Laporans, laporan)
 		laporan.TglKirim = tglKirim.Format("02 Jan 2006")
+		laporans.Laporans = append(laporans.Laporans, laporan)
 	}
 
 	defer con.Close()
@@ -93,7 +93,7 @@ func GetMyLaporan(idUser string) Laporans {
 func CreateLaporan(laporan Laporan) error {
 	con := db.Connect()
 
-	_, err := con.Exec("INSERT INTO laporan (pengirim, subjek, kategori, pesan, lampiran, status, tglKirim) VALUES (?,?,?,?,?,?,?)", laporan.Pengirim, laporan.Subjek, laporan.Kategori, laporan.Pesan, laporan.Lampiran, laporan.Status, &laporan.TglKirim)
+	_, err := con.Exec("INSERT INTO laporan (pengirim, subjek, kategori, pesan, lampiran, status, tglKirim) VALUES (?,?,?,?,?,?,?)", laporan.Pengirim, laporan.Subjek, laporan.Kategori, laporan.Pesan, laporan.Lampiran, laporan.Status, laporan.TglKirim)
 
 	defer con.Close()
 

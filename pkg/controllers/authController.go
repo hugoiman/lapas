@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
+	mw "lapas/middleware"
 	models "lapas/pkg/models"
 	"net/http"
 	"time"
@@ -48,26 +49,21 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 // MySigningKey is signature
-var MySigningKey = []byte("jwt super secret key")
+var MySigningKey = mw.MySigningKey
 
-// MyClaims is Credential
-type MyClaims struct {
-	IDUser  int    `json:"idUser"`
-	Nama    string `json:"nama"`
-	Pangkat string `json:"pangkat"`
-	Divisi  string `json:"divisi"`
-	jwt.StandardClaims
-}
+// MyClaims is credential
+type MyClaims = mw.MyClaims
 
 // CreateToken is Generate token
 func CreateToken(user models.User) string {
 	claims := MyClaims{
 		IDUser:  user.IDUser,
 		Nama:    user.Nama,
+		Job:     user.Job,
 		Pangkat: user.Pangkat,
 		Divisi:  user.Divisi,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Minute * 2).Unix(),
+			ExpiresAt: time.Now().Add(time.Hour * 2).Unix(),
 		},
 	}
 

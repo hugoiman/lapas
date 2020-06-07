@@ -64,6 +64,13 @@ func main() {
 	api.HandleFunc("/laporan", controllers.CreateLaporan).Methods("POST")
 	api.HandleFunc("/tanggapan/{idLaporan}", mw.IsSDM(controllers.CreateTanggapan)).Methods("POST")
 
+	// Surat
+	api.HandleFunc("/surat/{idSurat}", mw.RSurat(controllers.GetSurat)).Methods("GET")
+	api.HandleFunc("/surat", mw.RSurat(controllers.GetSurats)).Methods("GET")
+	api.HandleFunc("/surat", mw.CUDSurat(controllers.CreateSurat)).Methods("POST")
+	api.HandleFunc("/surat/{idSurat}", mw.CUDSurat(controllers.UpdateSurat)).Methods("PUT")
+	api.HandleFunc("/surat/{idSurat}", mw.CUDSurat(controllers.DeleteSurat)).Methods("DELETE")
+
 	fmt.Println("Server running at: 5000")
 	log.Fatal(http.ListenAndServe(":5000", handlers.CORS(origins)(router)))
 
