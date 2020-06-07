@@ -12,6 +12,7 @@ type User struct {
 	NIPG       string    `json:"nipg" validate:"required"`
 	Nama       string    `json:"nama" validate:"required"`
 	Email      string    `json:"email" validate:"required,email"`
+	Job        string    `json:"job" validate:"required"`
 	Pangkat    string    `json:"pangkat" validate:"required"`
 	Divisi     string    `json:"divisi" validate:"required"`
 	Direktorat string    `json:"direktorat" validate:"required"`
@@ -27,11 +28,11 @@ type Users struct {
 // GetUser is function
 func GetUser(idUser string) User {
 	con := db.Connect()
-	query := "SELECT idUser, nipg, nama, email, pangkat, divisi, direktorat, actived from user where idUser = ?"
+	query := "SELECT idUser, nipg, nama, email, job, pangkat, divisi, direktorat, actived from user where idUser = ?"
 
 	user := User{}
 	err := con.QueryRow(query, idUser).Scan(
-		&user.IDUser, &user.NIPG, &user.Nama, &user.Email,
+		&user.IDUser, &user.NIPG, &user.Nama, &user.Email, &user.Job,
 		&user.Pangkat, &user.Divisi, &user.Direktorat, &user.Actived)
 
 	if err != nil {
@@ -46,7 +47,7 @@ func GetUser(idUser string) User {
 // GetUsers is function
 func GetUsers() Users {
 	con := db.Connect()
-	query := "SELECT idUser, nipg, nama, email, pangkat, divisi, direktorat, actived, tglLahir from user LIMIT 10"
+	query := "SELECT idUser, nipg, nama, email, job, pangkat, divisi, direktorat, actived, tglLahir from user LIMIT 10"
 	rows, err := con.Query(query)
 
 	if err != nil {
@@ -58,7 +59,7 @@ func GetUsers() Users {
 
 	for rows.Next() {
 		err2 := rows.Scan(
-			&user.IDUser, &user.NIPG, &user.Nama, &user.Email,
+			&user.IDUser, &user.NIPG, &user.Nama, &user.Email, &user.Job,
 			&user.Pangkat, &user.Divisi, &user.Direktorat, &user.Actived, &user.TglLahir)
 		if err2 != nil {
 			fmt.Println(err2.Error())
@@ -74,7 +75,7 @@ func GetUsers() Users {
 // CreateUser is New User
 func CreateUser(user User) error {
 	con := db.Connect()
-	_, err := con.Exec("INSERT INTO user (nipg, nama, email, pangkat, divisi, direktorat, actived, tglLahir) VALUES (?,?,?,?,?,?,?,?)", user.NIPG, user.Nama, user.Email, user.Pangkat, user.Divisi, user.Direktorat, user.Actived, user.TglLahir)
+	_, err := con.Exec("INSERT INTO user (nipg, nama, email, job, pangkat, divisi, direktorat, actived, tglLahir) VALUES (?,?,?,?,?,?,?,?)", user.NIPG, user.Nama, user.Email, user.Job, user.Pangkat, user.Divisi, user.Direktorat, user.Actived, user.TglLahir)
 
 	defer con.Close()
 
@@ -84,8 +85,8 @@ func CreateUser(user User) error {
 // UpdateUser is Edit User
 func UpdateUser(idUser string, user User) error {
 	con := db.Connect()
-	query := "UPDATE user SET nipg = ?, nama = ?, email = ?, pangkat = ?, divisi = ?, direktorat = ?, actived = ?, tglLahir = ? WHERE idUser = ?"
-	_, err := con.Exec(query, user.NIPG, user.Nama, user.Email, user.Pangkat, user.Divisi, user.Direktorat, user.Actived, user.TglLahir, idUser)
+	query := "UPDATE user SET nipg = ?, nama = ?, email = ?, job = ?, pangkat = ?, divisi = ?, direktorat = ?, actived = ?, tglLahir = ? WHERE idUser = ?"
+	_, err := con.Exec(query, user.NIPG, user.Nama, user.Email, user.Job, user.Pangkat, user.Divisi, user.Direktorat, user.Actived, user.TglLahir, idUser)
 
 	defer con.Close()
 
@@ -96,7 +97,7 @@ func UpdateUser(idUser string, user User) error {
 func CheckOldPassword(idUser, password string) bool {
 	var isAny bool
 	con := db.Connect()
-	query := "SELECT EXISTS (SELECT 1 FROM `user` WHERE idUser = ? AND password = ?)"
+	query := "SELECT EXISTS (SELECT 1 FROM user WHERE idUser = ? AND password = ?)"
 	con.QueryRow(query, idUser, password).Scan(&isAny)
 
 	defer con.Close()
