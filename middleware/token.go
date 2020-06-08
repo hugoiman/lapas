@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -47,7 +48,7 @@ func AuthToken(next http.Handler) http.Handler {
 		}
 
 		context.Set(r, "user", claims)
-
+		fmt.Printf("%+v", claims)
 		next.ServeHTTP(w, r)
 	})
 }

@@ -70,6 +70,10 @@ func main() {
 	api.HandleFunc("/surat", mw.CUDSurat(controllers.CreateSurat)).Methods("POST")
 	api.HandleFunc("/surat/{idSurat}", mw.CUDSurat(controllers.UpdateSurat)).Methods("PUT")
 	api.HandleFunc("/surat/{idSurat}", mw.CUDSurat(controllers.DeleteSurat)).Methods("DELETE")
+	api.HandleFunc("/surat-status/{idSurat}", controllers.BeriStatus).Methods("PUT")
+
+	// Disposisi
+	api.HandleFunc("/disposisi/{idDisposisi}", controllers.GetDisposisi).Methods("GET")
 
 	fmt.Println("Server running at: 5000")
 	log.Fatal(http.ListenAndServe(":5000", handlers.CORS(origins)(router)))
