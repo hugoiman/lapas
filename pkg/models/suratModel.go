@@ -10,7 +10,6 @@ type Surat struct {
 	IDSurat     int    `json:"idSurat"`
 	Nomor       string `json:"nomor" validate:"required"`
 	Sifat       string `json:"sifat" validate:"required"`
-	Jenis       string `json:"jenis" validate:"required"`
 	Status      string `json:"status"`
 	Perihal     string `json:"perihal" validate:"required"`
 	Asal        string `json:"asal" validate:"required"`
@@ -33,14 +32,14 @@ type Surats struct {
 // GetSurat is func
 func GetSurat(idSurat string) (Surat, error) {
 	con := db.Connect()
-	query := "SELECT idSurat, nomor, sifat, jenis, status, perihal, asal, tujuan, (SELECT a.nama FROM user a JOIN surat b ON a.idUser = b.penerima WHERE b.idSurat = ?) AS penerima, lampiran, (SELECT a.nama FROM user a JOIN surat b ON a.idUser = b.inputBy WHERE b.idSurat = ?) AS inputBy, (SELECT IFNULL((SELECT a.nama FROM user a JOIN surat b ON a.idUser = b.updatedBy WHERE b.idSurat = ?),'')) AS updatedBy, tglSurat, tglDiterima, createdAt, updatedAt FROM surat WHERE idSurat = ?"
+	query := "SELECT idSurat, nomor, sifat, status, perihal, asal, tujuan, (SELECT a.nama FROM user a JOIN surat b ON a.idUser = b.penerima WHERE b.idSurat = ?) AS penerima, lampiran, (SELECT a.nama FROM user a JOIN surat b ON a.idUser = b.inputBy WHERE b.idSurat = ?) AS inputBy, (SELECT IFNULL((SELECT a.nama FROM user a JOIN surat b ON a.idUser = b.updatedBy WHERE b.idSurat = ?),'')) AS updatedBy, tglSurat, tglDiterima, createdAt, updatedAt FROM surat WHERE idSurat = ?"
 
 	surat := Surat{}
 	var tglSurat, createdAt time.Time
 	var updatedAt, tglDiterima interface{}
 
 	err := con.QueryRow(query, idSurat, idSurat, idSurat, idSurat).Scan(
-		&surat.IDSurat, &surat.Nomor, &surat.Sifat, &surat.Jenis,
+		&surat.IDSurat, &surat.Nomor, &surat.Sifat,
 		&surat.Status, &surat.Perihal, &surat.Asal, &surat.Tujuan,
 		&surat.Penerima, &surat.Lampiran, &surat.InputBy, &surat.UpdatedBy,
 		&tglSurat, &tglDiterima, &createdAt, &updatedAt)
@@ -67,7 +66,7 @@ func GetSurat(idSurat string) (Surat, error) {
 // GetSurats is func
 func GetSurats() Surats {
 	con := db.Connect()
-	query := "SELECT idSurat, nomor, sifat, jenis, status, perihal, asal, tujuan, penerima, lampiran, inputBy, updatedBy, tglSurat, tglDiterima, createdAt, updatedAt FROM surat"
+	query := "SELECT idSurat, nomor, sifat, status, perihal, asal, tujuan, penerima, lampiran, inputBy, updatedBy, tglSurat, tglDiterima, createdAt, updatedAt FROM surat"
 	rows, _ := con.Query(query)
 
 	surat := Surat{}
@@ -77,7 +76,7 @@ func GetSurats() Surats {
 
 	for rows.Next() {
 		_ = rows.Scan(
-			&surat.IDSurat, &surat.Nomor, &surat.Sifat, &surat.Jenis,
+			&surat.IDSurat, &surat.Nomor, &surat.Sifat,
 			&surat.Status, &surat.Perihal, &surat.Asal, &surat.Tujuan,
 			&surat.Penerima, &surat.Lampiran, &surat.InputBy, &surat.UpdatedBy,
 			&tglSurat, &tglDiterima, &createdAt, &updatedAt)
@@ -110,9 +109,9 @@ func CreateSurat(surat Surat) error {
 
 	var err error
 	if surat.TglDiterima == "" {
-		_, err = con.Exec("INSERT INTO surat (nomor, sifat, jenis, status, perihal, asal, tujuan, penerima, lampiran, inputBy, tglSurat, createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", surat.Nomor, surat.Sifat, surat.Jenis, surat.Status, surat.Perihal, surat.Asal, surat.Tujuan, surat.Penerima, surat.Lampiran, surat.InputBy, surat.TglSurat, surat.CreatedAt)
+		_, err = con.Exec("INSERT INTO surat (nomor, sifat, status, perihal, asal, tujuan, penerima, lampiran, inputBy, tglSurat, createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", surat.Nomor, surat.Sifat, surat.Status, surat.Perihal, surat.Asal, surat.Tujuan, surat.Penerima, surat.Lampiran, surat.InputBy, surat.TglSurat, surat.CreatedAt)
 	} else {
-		_, err = con.Exec("INSERT INTO surat (nomor, sifat, jenis, status, perihal, asal, tujuan, penerima, lampiran, inputBy, tglSurat, tglDiterima, createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", surat.Nomor, surat.Sifat, surat.Jenis, surat.Status, surat.Perihal, surat.Asal, surat.Tujuan, surat.Penerima, surat.Lampiran, surat.InputBy, surat.TglSurat, surat.TglDiterima, surat.CreatedAt)
+		_, err = con.Exec("INSERT INTO surat (nomor, sifat, status, perihal, asal, tujuan, penerima, lampiran, inputBy, tglSurat, tglDiterima, createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", surat.Nomor, surat.Sifat, surat.Status, surat.Perihal, surat.Asal, surat.Tujuan, surat.Penerima, surat.Lampiran, surat.InputBy, surat.TglSurat, surat.TglDiterima, surat.CreatedAt)
 
 	}
 
@@ -127,12 +126,12 @@ func UpdateSurat(idSurat string, surat Surat) error {
 	var err error
 
 	if surat.TglDiterima == "" {
-		query := "UPDATE surat SET nomor = ?, sifat = ?, jenis = ?, status = ?, perihal = ?, asal = ?, tujuan = ?, penerima = ?, lampiran = ?, updatedBy = ?, tglSurat = ?, updatedAt = ? WHERE idSurat = ? AND status != 'Deleted'"
-		_, err = con.Exec(query, surat.Nomor, surat.Sifat, surat.Jenis, surat.Status, surat.Perihal, surat.Asal, surat.Tujuan, surat.Penerima, surat.Lampiran, surat.UpdatedBy, surat.TglSurat, surat.UpdatedAt, idSurat)
+		query := "UPDATE surat SET nomor = ?, sifat = ?, status = ?, perihal = ?, asal = ?, tujuan = ?, penerima = ?, lampiran = ?, updatedBy = ?, tglSurat = ?, updatedAt = ? WHERE idSurat = ? AND status != 'Deleted'"
+		_, err = con.Exec(query, surat.Nomor, surat.Sifat, surat.Status, surat.Perihal, surat.Asal, surat.Tujuan, surat.Penerima, surat.Lampiran, surat.UpdatedBy, surat.TglSurat, surat.UpdatedAt, idSurat)
 
 	} else {
-		query := "UPDATE surat SET nomor = ?, sifat = ?, jenis = ?, status = ?, perihal = ?, asal = ?, tujuan = ?, penerima = ?, lampiran = ?, updatedBy = ?, tglSurat = ?, tglDiterima = ?, updatedAt = ? WHERE idSurat = ? AND status != 'Deleted'"
-		_, err = con.Exec(query, surat.Nomor, surat.Sifat, surat.Jenis, surat.Status, surat.Perihal, surat.Asal, surat.Tujuan, surat.Penerima, surat.Lampiran, surat.UpdatedBy, surat.TglSurat, surat.TglDiterima, surat.UpdatedAt, idSurat)
+		query := "UPDATE surat SET nomor = ?, sifat = ?, status = ?, perihal = ?, asal = ?, tujuan = ?, penerima = ?, lampiran = ?, updatedBy = ?, tglSurat = ?, tglDiterima = ?, updatedAt = ? WHERE idSurat = ? AND status != 'Deleted'"
+		_, err = con.Exec(query, surat.Nomor, surat.Sifat, surat.Status, surat.Perihal, surat.Asal, surat.Tujuan, surat.Penerima, surat.Lampiran, surat.UpdatedBy, surat.TglSurat, surat.TglDiterima, surat.UpdatedAt, idSurat)
 	}
 
 	defer con.Close()
