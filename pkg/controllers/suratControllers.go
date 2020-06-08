@@ -2,10 +2,10 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	models "lapas/pkg/models"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -71,7 +71,7 @@ func CreateSurat(w http.ResponseWriter, r *http.Request) {
 
 	surat.CreatedAt = time.Now().Format("2006-01-02")
 	surat.Status = "Waiting"
-	surat.InputBy = user.Nama
+	surat.InputBy = strconv.Itoa(user.IDUser)
 
 	if surat.Asal == "Internal" || surat.Tujuan == "Internal" {
 		// next steps
@@ -80,34 +80,20 @@ func CreateSurat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.EqualFold(surat.Penerima, "Pimpinan") {
-		// get email pimpinan
-		penerima := models.GetPimpinan()
+	penerima := models.GetUser(surat.Penerima)
 
-		for _, v := range penerima.Users {
-			fmt.Println(v.Nama, " : ", v.Email)
-			// SendEmail(v.Email)
-		}
-
-	} else {
-		penerima := models.GetUser(surat.Penerima)
-
-		if penerima.Nama == "" {
-			http.Error(w, "Gagal! User tidak ditemukan.", http.StatusBadRequest)
-			return
-		} else if penerima.Job != "Direksi" {
-			http.Error(w, "Gagal! Penerima tidak dizinkian.", http.StatusBadRequest)
-			return
-		} else if !penerima.Actived {
-			http.Error(w, "Gagal! Penerima tidak aktif.", http.StatusBadRequest)
-			return
-		}
-
-		surat.Penerima = penerima.Nama
-
-		// SendEmail(user.Email)
-
+	if penerima.Nama == "" {
+		http.Error(w, "Gagal! User tidak ditemukan.", http.StatusBadRequest)
+		return
+	} else if penerima.Job != "Direksi" { // atau sekretaris perusahaan
+		http.Error(w, "Gagal! Penerima tidak dizinkian.", http.StatusBadRequest)
+		return
+	} else if !penerima.Actived {
+		http.Error(w, "Gagal! Penerima tidak aktif.", http.StatusBadRequest)
+		return
 	}
+
+	// SendEmail(user.Email)
 
 	err := models.CreateSurat(surat)
 
@@ -136,20 +122,20 @@ func UpdateSurat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	surat.UpdatedAt = time.Now().Format("2006-01-02")
+	surat.UpdatedBy = strconv.Itoa(user.IDUser)
 	regexDate := regexp.MustCompile(`^(20)\d\d[-](0?[1-9]|1[012])[-](0?[1-9]|[12][0-9]|3[01])$`)
 
 	if !regexDate.MatchString(surat.TglSurat) {
 		http.Error(w, "Gagal! Format tanggal YYYY-MM-DD", http.StatusBadRequest)
 		return
-	}
-
-	if surat.TglDiterima != "" && !regexDate.MatchString(surat.TglDiterima) {
-		http.Error(w, "Gagal! Format tanggal trima YYYY-MM-DD", http.StatusBadRequest)
+	} else if surat.TglDiterima != "" && !regexDate.MatchString(surat.TglDiterima) {
+		http.Error(w, "Gagal! Format tanggal diterima YYYY-MM-DD", http.StatusBadRequest)
+		return
+	} else if surat.Status == "Waiting" {
+		http.Error(w, "Gagal! Status surat harus 'Waiting'", http.StatusBadRequest)
 		return
 	}
-
-	surat.UpdatedAt = time.Now().Format("2006-01-02")
-	surat.UpdatedBy = user.Nama
 
 	if surat.Asal == "Internal" || surat.Tujuan == "Internal" {
 		// next steps
@@ -158,39 +144,34 @@ func UpdateSurat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.EqualFold(surat.Penerima, "Pimpinan") {
-		// get email pimpinan
-		penerima := models.GetPimpinan()
-
-		for _, v := range penerima.Users {
-			fmt.Println(v.Nama, " : ", v.Email)
-			// SendEmail(v.Email)
-		}
-
-	} else {
-		penerima := models.GetUser(surat.Penerima)
-
-		if penerima.Nama == "" {
-			http.Error(w, "Gagal! User tidak ditemukan.", http.StatusBadRequest)
-			return
-		} else if penerima.Job != "Direksi" {
-			http.Error(w, "Gagal! Penerima tidak dizinkian.", http.StatusBadRequest)
-			return
-		} else if !penerima.Actived {
-			http.Error(w, "Gagal! Penerima tidak aktif.", http.StatusBadRequest)
-			return
-		}
-
-		surat.Penerima = penerima.Nama
-
-		// SendEmail(user.Email)
-
+	penerima := models.GetUser(surat.Penerima)
+	if penerima.Nama == "" {
+		http.Error(w, "Gagal! User tidak ditemukan.", http.StatusBadRequest)
+		return
+	} else if penerima.Job != "Direksi" {
+		http.Error(w, "Gagal! Penerima tidak dizinkian.", http.StatusBadRequest)
+		return
+	} else if !penerima.Actived {
+		http.Error(w, "Gagal! Penerima tidak aktif.", http.StatusBadRequest)
+		return
 	}
 
-	numRows := models.UpdateSurat(idSurat, surat)
+	// SendEmail(user.Email)
+	getSurat, _ := models.GetSurat(idSurat)
+	if getSurat.Nomor == "" {
+		http.Error(w, "Gagal! Surat tidak ditemukan.", http.StatusBadRequest)
+		return
+	} else if getSurat.Status == "Deleted" {
+		http.Error(w, "Gagal! Surat telah dihapus.", http.StatusGone)
+		return
+	} else if getSurat.Status != "Waiting" {
+		http.Error(w, "Gagal! Surat sudah ditindaklanjuti.", http.StatusBadRequest)
+		return
+	}
 
-	if numRows == 0 {
-		http.Error(w, "Gagal! Surat tidak ditemukan atau sudah dihapus.", http.StatusBadRequest)
+	err := models.UpdateSurat(idSurat, surat)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest) // nomor tidak unik
 		return
 	}
 
@@ -204,16 +185,51 @@ func DeleteSurat(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idSurat := vars["idSurat"]
 	user := context.Get(r, "user").(*MyClaims)
-	deletedBy := user.Nama
+	deletedBy := strconv.Itoa(user.IDUser)
 	updatedAt := time.Now().Format("2006-01-02")
 
-	numRows := models.DeleteSurat(idSurat, deletedBy, updatedAt)
-	if numRows == 0 {
+	surat, err := models.GetSurat(idSurat)
+
+	if err != nil {
 		http.Error(w, "Gagal! Surat tidak ditemukan.", http.StatusBadRequest)
 		return
+	} else if surat.Status != "Waiting" {
+		http.Error(w, "Gagal! urat sudah ditindaklanjuti.", http.StatusBadRequest)
+		return
 	}
+
+	models.DeleteSurat(idSurat, deletedBy, updatedAt)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"message":"Data berhasil dihapus."}`))
+}
+
+// BeriStatus is func
+func BeriStatus(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idSurat := vars["idSurat"]
+	user := context.Get(r, "user").(*MyClaims)
+
+	surat, err := models.GetSurat(idSurat)
+	if err != nil {
+		http.Error(w, "Gagal! Surat tidak ditemukan.", http.StatusBadRequest)
+		return
+	} else if surat.Status == "Deleted" {
+		http.Error(w, "Gagal! Surat telah dihapus.", http.StatusForbidden)
+		return
+	} else if surat.Penerima != strconv.Itoa(user.IDUser) {
+		http.Error(w, "Gagal! Anda bukan penerima surat.", http.StatusForbidden)
+		return
+	}
+
+	models.BeriStatus(idSurat)
+
+	// filling
+	// update status disposisi = delete, laporanDisposisi = delete where idsurat = x
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"message":"Status surat telah menjadi 'Filling'."}`))
+
 }

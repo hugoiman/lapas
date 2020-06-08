@@ -38,7 +38,7 @@ func RSurat(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := context.Get(r, "user").(*MyClaims)
 		// fmt.Printf("%+v", user)
-		if !strings.EqualFold(user.Job, "Direksi") {
+		if user.Divisi != "Sekretaris Perusahaan" { // admin/direksi/direktur
 			http.Error(w, "Gagal! Anda tidak diizinkan.", http.StatusForbidden)
 			return
 		}
@@ -51,7 +51,7 @@ func RSurat(next http.HandlerFunc) http.HandlerFunc {
 func CUDSurat(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := context.Get(r, "user").(*MyClaims)
-		if !strings.EqualFold(user.Divisi, "Sekretaris Perusahaan") {
+		if !strings.EqualFold(user.Divisi, "Sekretaris Perusahaan") { // admin
 			http.Error(w, "Gagal! Anda tidak diizinkan.", http.StatusForbidden)
 			return
 		}

@@ -33,13 +33,13 @@ type Surats struct {
 // GetSurat is func
 func GetSurat(idSurat string) (Surat, error) {
 	con := db.Connect()
-	query := "SELECT  idSurat, nomor, sifat, jenis, status, perihal, asal, tujuan, penerima, lampiran, inputBy, updatedBy, tglSurat, tglDiterima, createdAt, updatedAt FROM surat WHERE idSurat = ?"
+	query := "SELECT idSurat, nomor, sifat, jenis, status, perihal, asal, tujuan, (SELECT a.nama FROM user a JOIN surat b ON a.idUser = b.penerima WHERE b.idSurat = ?) AS penerima, lampiran, (SELECT a.nama FROM user a JOIN surat b ON a.idUser = b.inputBy WHERE b.idSurat = ?) AS inputBy, (SELECT IFNULL((SELECT a.nama FROM user a JOIN surat b ON a.idUser = b.updatedBy WHERE b.idSurat = ?),'')) AS updatedBy, tglSurat, tglDiterima, createdAt, updatedAt FROM surat WHERE idSurat = ?"
 
 	surat := Surat{}
 	var tglSurat, createdAt time.Time
 	var updatedAt, tglDiterima interface{}
 
-	err := con.QueryRow(query, idSurat).Scan(
+	err := con.QueryRow(query, idSurat, idSurat, idSurat, idSurat).Scan(
 		&surat.IDSurat, &surat.Nomor, &surat.Sifat, &surat.Jenis,
 		&surat.Status, &surat.Perihal, &surat.Asal, &surat.Tujuan,
 		&surat.Penerima, &surat.Lampiran, &surat.InputBy, &surat.UpdatedBy,
@@ -104,27 +104,6 @@ func GetSurats() Surats {
 	return surats
 }
 
-// GetPimpinan is func
-func GetPimpinan() Users {
-	con := db.Connect()
-	query := "SELECT nama, email FROM user WHERE (job = 'Direksi' OR job = 'Direktur') AND actived = 1"
-
-	rows, _ := con.Query(query)
-
-	user := User{}
-	users := Users{}
-
-	for rows.Next() {
-		_ = rows.Scan(
-			&user.Nama, &user.Email)
-
-		users.Users = append(users.Users, user)
-	}
-
-	defer con.Close()
-	return users
-}
-
 // CreateSurat is func
 func CreateSurat(surat Surat) error {
 	con := db.Connect()
@@ -143,36 +122,37 @@ func CreateSurat(surat Surat) error {
 }
 
 // UpdateSurat is func
-func UpdateSurat(idSurat string, surat Surat) int {
+func UpdateSurat(idSurat string, surat Surat) error {
 	con := db.Connect()
-	var countx int
+	var err error
 
 	if surat.TglDiterima == "" {
 		query := "UPDATE surat SET nomor = ?, sifat = ?, jenis = ?, status = ?, perihal = ?, asal = ?, tujuan = ?, penerima = ?, lampiran = ?, updatedBy = ?, tglSurat = ?, updatedAt = ? WHERE idSurat = ? AND status != 'Deleted'"
-		res, _ := con.Exec(query, surat.Nomor, surat.Sifat, surat.Jenis, surat.Status, surat.Perihal, surat.Asal, surat.Tujuan, surat.Penerima, surat.Lampiran, surat.UpdatedBy, surat.TglSurat, surat.UpdatedAt, idSurat)
-		count, _ := res.RowsAffected()
-		countx = int(count)
+		_, err = con.Exec(query, surat.Nomor, surat.Sifat, surat.Jenis, surat.Status, surat.Perihal, surat.Asal, surat.Tujuan, surat.Penerima, surat.Lampiran, surat.UpdatedBy, surat.TglSurat, surat.UpdatedAt, idSurat)
+
 	} else {
 		query := "UPDATE surat SET nomor = ?, sifat = ?, jenis = ?, status = ?, perihal = ?, asal = ?, tujuan = ?, penerima = ?, lampiran = ?, updatedBy = ?, tglSurat = ?, tglDiterima = ?, updatedAt = ? WHERE idSurat = ? AND status != 'Deleted'"
-		res, _ := con.Exec(query, surat.Nomor, surat.Sifat, surat.Jenis, surat.Status, surat.Perihal, surat.Asal, surat.Tujuan, surat.Penerima, surat.Lampiran, surat.UpdatedBy, surat.TglSurat, surat.TglDiterima, surat.UpdatedAt, idSurat)
-		count, _ := res.RowsAffected()
-		countx = int(count)
+		_, err = con.Exec(query, surat.Nomor, surat.Sifat, surat.Jenis, surat.Status, surat.Perihal, surat.Asal, surat.Tujuan, surat.Penerima, surat.Lampiran, surat.UpdatedBy, surat.TglSurat, surat.TglDiterima, surat.UpdatedAt, idSurat)
 	}
 
 	defer con.Close()
 
-	return countx
+	return err
 }
 
 // DeleteSurat is func
-func DeleteSurat(idSurat, deletedBy, updated string) int {
+func DeleteSurat(idSurat, deletedBy, updated string) {
 	con := db.Connect()
 	query := "UPDATE surat SET status = 'Deleted', updatedBy = ?, updatedAt = ? WHERE idSurat = ?"
-	res, _ := con.Exec(query, deletedBy, updated, idSurat)
-
-	count, _ := res.RowsAffected()
+	_, _ = con.Exec(query, deletedBy, updated, idSurat)
 
 	defer con.Close()
+}
 
-	return int(count)
+// BeriStatus is func
+func BeriStatus(idSurat string) {
+	con := db.Connect()
+	query := "UPDATE surat SET status = 'Filling' WHERE idSurat = ?"
+	_, _ = con.Exec(query, idSurat)
+	defer con.Close()
 }
