@@ -2,11 +2,11 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	models "lapas/pkg/models"
 	"net/http"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gorilla/context"
@@ -16,17 +16,22 @@ import (
 
 // GetSurat is func
 func GetSurat(w http.ResponseWriter, r *http.Request) {
+	user := context.Get(r, "user").(*MyClaims)
 	vars := mux.Vars(r)
 	idSurat := vars["idSurat"]
 
 	data, err := models.GetSurat(idSurat)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Gagal! Surat tidak ditemukan", http.StatusBadRequest)
 		return
-	} else if strings.EqualFold(data.Status, "Deleted") {
-		http.Error(w, "Surat telah dihapus.", http.StatusGone)
+	} else if user.Job != "Direktur" && user.Job != "Direksi" && user.Divisi != "Sekretaris Perusahaan" && user.Divisi != "Logistik & Administrasi" && user.IDUser != data.IDPenerima {
+		http.Error(w, "Gagal! Anda tidak diizinkan.", http.StatusForbidden)
+		return
+	} else if data.Status == "Deleted" {
+		http.Error(w, "Gagal! Surat telah dihapus.", http.StatusGone)
 		return
 	}
+
 	message, _ := json.Marshal(data)
 
 	w.Header().Set("Content-type", "application/json")
@@ -48,6 +53,7 @@ func GetSurats(w http.ResponseWriter, r *http.Request) {
 func CreateSurat(w http.ResponseWriter, r *http.Request) {
 	user := context.Get(r, "user").(*MyClaims)
 	var surat models.Surat
+	regexDate := regexp.MustCompile(`^(20)\d\d[-](0?[1-9]|1[012])[-](0?[1-9]|[12][0-9]|3[01])$`)
 
 	if err := json.NewDecoder(r.Body).Decode(&surat); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -55,37 +61,26 @@ func CreateSurat(w http.ResponseWriter, r *http.Request) {
 	} else if err := validator.New().Struct(surat); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	}
-
-	regexDate := regexp.MustCompile(`^(20)\d\d[-](0?[1-9]|1[012])[-](0?[1-9]|[12][0-9]|3[01])$`)
-
-	if !regexDate.MatchString(surat.TglSurat) {
-		http.Error(w, "Gagal! Format tanggal YYYY-MM-DD", http.StatusBadRequest)
+	} else if surat.Asal != "Internal" && surat.Tujuan != "Internal" {
+		http.Error(w, "Gagal! Asal/tujuan surat salah satunya harus berisi Internal", http.StatusBadRequest)
 		return
-	}
-
-	if surat.TglDiterima != "" && !regexDate.MatchString(surat.TglDiterima) {
-		http.Error(w, "Gagal! Format tanggal trima YYYY-MM-DD", http.StatusBadRequest)
+	} else if !regexDate.MatchString(surat.TglSurat) {
+		http.Error(w, "Gagal! Format tanggal surat harus YYYY-MM-DD", http.StatusBadRequest)
+		return
+	} else if surat.TglDiterima != "" && !regexDate.MatchString(surat.TglDiterima) {
+		http.Error(w, "Gagal! Format tanggal diterima harus YYYY-MM-DD", http.StatusBadRequest)
 		return
 	}
 
 	surat.CreatedAt = time.Now().Format("2006-01-02")
 	surat.Status = "Waiting"
-	surat.InputBy = strconv.Itoa(user.IDUser)
+	surat.InputByID = user.IDUser
 
-	if surat.Asal == "Internal" || surat.Tujuan == "Internal" {
-		// next steps
-	} else {
-		http.Error(w, "Gagal! Asal/tujuan surat salah satunya harus berisi Internal", http.StatusBadRequest)
-		return
-	}
-
-	penerima := models.GetUser(surat.Penerima)
-
+	penerima := models.GetUser(strconv.Itoa(surat.IDPenerima))
 	if penerima.Nama == "" {
-		http.Error(w, "Gagal! User tidak ditemukan.", http.StatusBadRequest)
+		http.Error(w, "Gagal! Penerima tidak terdaftar.", http.StatusBadRequest)
 		return
-	} else if penerima.Job != "Direksi" { // atau sekretaris perusahaan
+	} else if !(penerima.Job == "Direksi" || penerima.Job == "Direktur") && penerima.Divisi != "Sekretaris Perusahaan" {
 		http.Error(w, "Gagal! Penerima tidak dizinkian.", http.StatusBadRequest)
 		return
 	} else if !penerima.Actived {
@@ -93,26 +88,27 @@ func CreateSurat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// SendEmail(user.Email)
-
 	err := models.CreateSurat(surat)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest) // duplikasi nomor/lampiran (not unique)
 		return
 	}
+
+	// SendEmail(user.Email)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(`{"message":"Data berhasil disimpan!"}`))
 }
 
-// UpdateSurat is func
+// UpdateSurat dilakukan ketika status == waiting
 func UpdateSurat(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idSurat := vars["idSurat"]
 	user := context.Get(r, "user").(*MyClaims)
 	var surat models.Surat
+	regexDate := regexp.MustCompile(`^(20)\d\d[-](0?[1-9]|1[012])[-](0?[1-9]|[12][0-9]|3[01])$`)
 
 	if err := json.NewDecoder(r.Body).Decode(&surat); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -120,35 +116,25 @@ func UpdateSurat(w http.ResponseWriter, r *http.Request) {
 	} else if err := validator.New().Struct(surat); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
+	} else if surat.Asal != "Internal" && surat.Tujuan != "Internal" {
+		http.Error(w, "Gagal! Asal/tujuan surat salah satunya harus berisi Internal", http.StatusBadRequest)
+		return
+	} else if !regexDate.MatchString(surat.TglSurat) {
+		http.Error(w, "Gagal! Format tanggal surat harus YYYY-MM-DD", http.StatusBadRequest)
+		return
+	} else if surat.TglDiterima != "" && !regexDate.MatchString(surat.TglDiterima) {
+		http.Error(w, "Gagal! Format tanggal diterima harus YYYY-MM-DD", http.StatusBadRequest)
+		return
 	}
 
 	surat.UpdatedAt = time.Now().Format("2006-01-02")
-	surat.UpdatedBy = strconv.Itoa(user.IDUser)
-	regexDate := regexp.MustCompile(`^(20)\d\d[-](0?[1-9]|1[012])[-](0?[1-9]|[12][0-9]|3[01])$`)
+	surat.UpdatedByID = user.IDUser
 
-	if !regexDate.MatchString(surat.TglSurat) {
-		http.Error(w, "Gagal! Format tanggal YYYY-MM-DD", http.StatusBadRequest)
-		return
-	} else if surat.TglDiterima != "" && !regexDate.MatchString(surat.TglDiterima) {
-		http.Error(w, "Gagal! Format tanggal diterima YYYY-MM-DD", http.StatusBadRequest)
-		return
-	} else if surat.Status == "Waiting" {
-		http.Error(w, "Gagal! Status surat harus 'Waiting'", http.StatusBadRequest)
-		return
-	}
-
-	if surat.Asal == "Internal" || surat.Tujuan == "Internal" {
-		// next steps
-	} else {
-		http.Error(w, "Gagal! Asal/tujuan surat salah satunya harus berisi Internal", http.StatusBadRequest)
-		return
-	}
-
-	penerima := models.GetUser(surat.Penerima)
+	penerima := models.GetUser(strconv.Itoa(surat.IDPenerima))
 	if penerima.Nama == "" {
-		http.Error(w, "Gagal! User tidak ditemukan.", http.StatusBadRequest)
+		http.Error(w, "Gagal! Penerima tidak terdaftar.", http.StatusBadRequest)
 		return
-	} else if penerima.Job != "Direksi" {
+	} else if !(penerima.Job == "Direksi" || penerima.Job == "Direktur") && penerima.Divisi != "Sekretaris Perusahaan" {
 		http.Error(w, "Gagal! Penerima tidak dizinkian.", http.StatusBadRequest)
 		return
 	} else if !penerima.Actived {
@@ -156,7 +142,6 @@ func UpdateSurat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// SendEmail(user.Email)
 	getSurat, _ := models.GetSurat(idSurat)
 	if getSurat.Nomor == "" {
 		http.Error(w, "Gagal! Surat tidak ditemukan.", http.StatusBadRequest)
@@ -171,9 +156,11 @@ func UpdateSurat(w http.ResponseWriter, r *http.Request) {
 
 	err := models.UpdateSurat(idSurat, surat)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest) // nomor tidak unik
+		http.Error(w, err.Error(), http.StatusBadRequest) // duplikasi nomor/lampiran (not unique)
 		return
 	}
+
+	// SendEmail(user.Email)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -194,7 +181,7 @@ func DeleteSurat(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Gagal! Surat tidak ditemukan.", http.StatusBadRequest)
 		return
 	} else if surat.Status != "Waiting" {
-		http.Error(w, "Gagal! urat sudah ditindaklanjuti.", http.StatusBadRequest)
+		http.Error(w, "Gagal! Surat sudah ditindaklanjuti.", http.StatusBadRequest)
 		return
 	}
 
@@ -205,28 +192,44 @@ func DeleteSurat(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"message":"Data berhasil dihapus."}`))
 }
 
-// BeriStatus is func
-func BeriStatus(w http.ResponseWriter, r *http.Request) {
+// BeriStatusSurat is func
+func BeriStatusSurat(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idSurat := vars["idSurat"]
 	user := context.Get(r, "user").(*MyClaims)
+
+	var data map[string]interface{}
+	json.NewDecoder(r.Body).Decode(&data)
+
+	if err := validator.New().Var(fmt.Sprintf("%v", data["status"]), "required,eq=Undelete|eq=Filling"); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	status := data["status"].(string)
 
 	surat, err := models.GetSurat(idSurat)
 	if err != nil {
 		http.Error(w, "Gagal! Surat tidak ditemukan.", http.StatusBadRequest)
 		return
-	} else if surat.Status == "Deleted" {
-		http.Error(w, "Gagal! Surat telah dihapus.", http.StatusForbidden)
+	} else if status == "Undelete" && user.Job == "Direksi" || user.Job == "Direktur" {
+		http.Error(w, "Gagal! Anda tidak diizinkan.", http.StatusForbidden)
 		return
-	} else if surat.Penerima != strconv.Itoa(user.IDUser) {
-		http.Error(w, "Gagal! Anda bukan penerima surat.", http.StatusForbidden)
+	} else if status == "Undelete" && surat.Status != "Deleted" {
+		http.Error(w, "Gagal! Surat belum dihapus sebelumnya.", http.StatusBadRequest)
+		return
+	} else if status == "Filling" && surat.IDPenerima != user.IDUser {
+		http.Error(w, "Gagal! Anda bukan penerima surat.", http.StatusBadRequest)
+		return
+	} else if surat.Status == "Solved" {
+		http.Error(w, "Gagal! Status surat sudah 'Solved'.", http.StatusBadRequest)
 		return
 	}
 
-	models.BeriStatus(idSurat)
+	updatedByID := user.IDUser
+	updatedAt := time.Now().Format("2006-01-02")
 
-	// filling
-	// update status disposisi = delete, laporanDisposisi = delete where idsurat = x
+	models.BeriStatusSurat(idSurat, strconv.Itoa(updatedByID), updatedAt, status)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)

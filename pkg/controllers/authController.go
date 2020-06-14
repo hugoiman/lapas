@@ -63,7 +63,7 @@ func CreateToken(user models.User) string {
 		Pangkat: user.Pangkat,
 		Divisi:  user.Divisi,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 2).Unix(),
+			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
 		},
 	}
 
