@@ -65,15 +65,19 @@ func main() {
 	api.HandleFunc("/tanggapan/{idLaporan}", mw.IsSDM(controllers.CreateTanggapan)).Methods("POST")
 
 	// Surat
-	api.HandleFunc("/surat/{idSurat}", mw.RSurat(controllers.GetSurat)).Methods("GET")
+	api.HandleFunc("/surat/{idSurat}", controllers.GetSurat).Methods("GET")
 	api.HandleFunc("/surat", mw.RSurat(controllers.GetSurats)).Methods("GET")
 	api.HandleFunc("/surat", mw.CUDSurat(controllers.CreateSurat)).Methods("POST")
 	api.HandleFunc("/surat/{idSurat}", mw.CUDSurat(controllers.UpdateSurat)).Methods("PUT")
 	api.HandleFunc("/surat/{idSurat}", mw.CUDSurat(controllers.DeleteSurat)).Methods("DELETE")
-	api.HandleFunc("/surat-status/{idSurat}", controllers.BeriStatus).Methods("PUT")
+	api.HandleFunc("/surat-status/{idSurat}", mw.RSurat(controllers.BeriStatusSurat)).Methods("PUT")
 
 	// Disposisi
 	api.HandleFunc("/disposisi/{idDisposisi}", controllers.GetDisposisi).Methods("GET")
+	api.HandleFunc("/disposisi", controllers.GetDisposisis).Methods("GET")
+	api.HandleFunc("/mydisposisi", controllers.GetMyDisposisis).Methods("GET")
+	api.HandleFunc("/disposisi", mw.CDispo(controllers.CreateDisposisi)).Methods("POST")
+	api.HandleFunc("/disposisi-status/{idDisposisi}", controllers.BeriStatusDisposisi).Methods("PUT")
 
 	fmt.Println("Server running at: 5000")
 	log.Fatal(http.ListenAndServe(":5000", handlers.CORS(origins)(router)))
