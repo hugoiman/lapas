@@ -15,6 +15,7 @@ import (
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	origins := handlers.AllowedOrigins([]string{"*"})
+	// controllers.SendEmail("Halo", "ogeno17@gmail.com", "<p>Hai</p>")
 
 	//	Login
 	router.HandleFunc("/login", controllers.Login).Methods("POST")

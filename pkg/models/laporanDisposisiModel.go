@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"lapas/db"
 	"time"
 )
@@ -10,10 +9,10 @@ import (
 type LaporanDispo struct {
 	IDLD        int    `json:"idLD"`
 	IDDisposisi int    `json:"idDisposisi"`
-	IDPenerima  int    `json:"idPenerima" validate:"required"`
+	IDPenerima  int    `json:"idPenerima"`
 	Penerima    string `json:"penerima"`
 	Status      string `json:"status"`
-	Laporan     string `json:"laporan"`
+	Laporan     string `json:"laporan" validate:"required"`
 	Lampiran    string `json:"lampiran"`
 	UpdatedAt   string `json:"updatedAt"`
 }
@@ -24,7 +23,28 @@ type LaporanDispos struct {
 }
 
 // GetLaporanDispo is func
-func GetLaporanDispo(idDisposisi string) LaporanDispos {
+func GetLaporanDispo(idLaporan string) (LaporanDispo, error) {
+	con := db.Connect()
+	query := "SELECT IDLD, idDisposisi, idPenerima, (SELECT nama FROM user WHERE idUser = idPenerima) AS penerima, status, laporan, lampiran, updatedAt FROM laporan_disposisi WHERE idLD = ?"
+	laporan := LaporanDispo{}
+
+	var updatedAt interface{}
+
+	err := con.QueryRow(query, idLaporan).Scan(
+		&laporan.IDLD, &laporan.IDDisposisi, &laporan.IDPenerima, &laporan.Penerima, &laporan.Status, &laporan.Laporan, &laporan.Lampiran, &updatedAt)
+
+	if updatedAt == nil {
+		laporan.UpdatedAt = ""
+	} else {
+		laporan.UpdatedAt = updatedAt.(time.Time).Format("02 Jan 2006")
+	}
+
+	defer con.Close()
+	return laporan, err
+}
+
+// GetLaporanDispos is func
+func GetLaporanDispos(idDisposisi string) LaporanDispos {
 	con := db.Connect()
 	query := "SELECT IDLD, idDisposisi, idPenerima, (SELECT nama FROM user WHERE idUser = idPenerima) AS penerima, status, laporan, lampiran, updatedAt FROM laporan_disposisi WHERE idDisposisi = ?"
 	rows, _ := con.Query(query, idDisposisi)
@@ -55,14 +75,21 @@ func GetLaporanDispo(idDisposisi string) LaporanDispos {
 // InitialLaporanDispo is func
 func InitialLaporanDispo(idPemberi int, laporan LaporanDispo) {
 	con := db.Connect()
-	_, err := con.Exec("INSERT INTO laporan_disposisi (idDisposisi, idPenerima, status) VALUES (?,?,?)", laporan.IDDisposisi, laporan.IDPenerima, laporan.Status)
-	if err != nil {
-		fmt.Println("error1 : ", err.Error())
-	}
-	_, err = con.Exec("UPDATE laporan_disposisi status = 'Forward' WHERE idDisposisi = ? AND idPenerima = ?", laporan.IDDisposisi, idPemberi)
-	if err != nil {
-		fmt.Println("error2 : ", err.Error())
-	}
+	_, _ = con.Exec("INSERT INTO laporan_disposisi (idDisposisi, idPenerima, status) VALUES (?,?,?)", laporan.IDDisposisi, laporan.IDPenerima, laporan.Status)
+
+	_, _ = con.Exec("UPDATE laporan_disposisi status = 'Forward' WHERE idDisposisi = ? AND idPenerima = ?", laporan.IDDisposisi, idPemberi)
+
+	defer con.Close()
+}
+
+// CreateLaporanDisposisi is func
+func CreateLaporanDisposisi(idLaporan string, laporan LaporanDispo) {
+	con := db.Connect()
+	query := "UPDATE laporan_disposisi SET status = ?, laporan = ?, lampiran = ?, updatedAt = ? WHERE idLD = ?"
+	_, _ = con.Exec(query, laporan.Status, laporan.Laporan, laporan.Lampiran, laporan.UpdatedAt, laporan.IDLD)
+
+	query = "UPDATE disposisi SET status = 'Process' WHERE idDisposisi = ? AND idLD = ?"
+	_, _ = con.Exec(query, laporan.Status, laporan.IDDisposisi)
 
 	defer con.Close()
 }
