@@ -43,7 +43,7 @@ func CreateEvaluasi(evaluasi Evaluasi) error {
 }
 
 // UpdateEvaluasi is edit Evaluasi
-func UpdateEvaluasi(idEvaluasi string, evaluasi Evaluasi) int {
+func UpdateEvaluasi(idEvaluasi string, evaluasi Evaluasi) bool {
 	con := db.Connect()
 	query := "UPDATE evaluasi SET pesan = ?, utama = ?, teknik_pengembangan = ?, operasi = ?, keuangan_administrasi = ?, updatedAt = ? WHERE idEvaluasi = ? AND idSurvei = ?"
 	res, _ := con.Exec(query, evaluasi.Pesan, &evaluasi.Utama, &evaluasi.TeknikPengembangan, &evaluasi.Operasi, &evaluasi.KeuanganAdministrasi, evaluasi.UpdatedAt, idEvaluasi, evaluasi.IDSurvei)
@@ -52,5 +52,9 @@ func UpdateEvaluasi(idEvaluasi string, evaluasi Evaluasi) int {
 
 	defer con.Close()
 
-	return int(count)
+	if int(count) == 0 {
+		return false
+	}
+
+	return true
 }

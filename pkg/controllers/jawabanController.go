@@ -164,3 +164,15 @@ func GetTanggapan(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(message))
 }
+
+// PrintSurvei is func
+func PrintSurvei(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idSurvei := vars["idSurvei"]
+	data := models.GetAllJawaban(idSurvei)
+	message, _ := json.Marshal(data)
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(message))
+}

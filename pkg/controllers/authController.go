@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"crypto/sha1"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	mw "lapas/middleware"
@@ -12,8 +11,10 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"gopkg.in/go-playground/validator.v9"
-	"gopkg.in/gomail.v2"
 )
+
+// MySigningKey is signature
+var MySigningKey = mw.MySigningKey
 
 // Login is func
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -50,9 +51,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	w.Write(message)
 }
 
-// MySigningKey is signature
-var MySigningKey = mw.MySigningKey
-
 // MyClaims is credential
 type MyClaims = mw.MyClaims
 
@@ -87,27 +85,4 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "localhost:8000/", http.StatusSeeOther)
 	return
-}
-
-const configSMTPHost = "smtp.gmail.com"
-const configSMTPPort = 587
-const configEmail = "nanonymoux@gmail.com"
-const configPassword = "kudaponi10"
-
-// SendEmail is func
-func SendEmail(subject, to, message string) {
-	mailer := gomail.NewMessage()
-	mailer.SetHeader("From", configEmail)
-	mailer.SetHeader("To", to)
-	mailer.SetHeader("Subject", subject)
-	mailer.SetHeader("text/html", message)
-
-	dialer := gomail.NewDialer(configSMTPHost, configSMTPPort, configEmail, configPassword)
-	dialer.TLSConfig = &tls.Config{InsecureSkipVerify: true}
-
-	err := dialer.DialAndSend(mailer)
-	if err != nil {
-		fmt.Println("errpor :", err.Error())
-	}
-
 }

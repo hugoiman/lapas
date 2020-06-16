@@ -101,7 +101,7 @@ func CreateLaporan(laporan Laporan) error {
 }
 
 // CreateTanggapan is func
-func CreateTanggapan(idLaporan string, tanggapan Laporan) int {
+func CreateTanggapan(idLaporan string, tanggapan Laporan) bool {
 	con := db.Connect()
 	query := "UPDATE laporan SET tanggapan = ?, penanggap = ?, tglTanggapan = ?, status = ? WHERE idLaporan = ?"
 	res, _ := con.Exec(query, tanggapan.Tanggapan, tanggapan.Penanggap, tanggapan.TglTanggapan, tanggapan.Status, idLaporan)
@@ -110,5 +110,9 @@ func CreateTanggapan(idLaporan string, tanggapan Laporan) int {
 
 	defer con.Close()
 
-	return int(count)
+	if int(count) == 0 {
+		return false
+	}
+
+	return true
 }

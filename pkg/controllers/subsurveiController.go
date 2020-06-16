@@ -42,8 +42,8 @@ func DeleteSubSurvei(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idSub := vars["idSub"]
 
-	numRows := models.DeleteSubSurvei(idSub)
-	if numRows == 0 {
+	isDeleted := models.DeleteSubSurvei(idSub)
+	if isDeleted == false {
 		http.Error(w, "Gagal! Survei tidak ditemukan.", http.StatusBadRequest)
 		return
 	}

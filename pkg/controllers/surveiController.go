@@ -85,7 +85,7 @@ func CreateSurvei(w http.ResponseWriter, r *http.Request) {
 	survei.IDSurvei = idSurvei
 	for _, v := range survei.Soal {
 		if err = models.CreateSoal(idSurvei, v); err != nil {
-			models.DeleteSurvei(strconv.Itoa(idSurvei))
+			_ = models.DeleteSurvei(strconv.Itoa(idSurvei))
 			http.Error(w, "Gagal! Sub survei tidak terdaftar.", http.StatusBadRequest)
 			return
 		}
@@ -101,8 +101,8 @@ func DeleteSurvei(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	idSurvei := vars["idSurvei"]
 
-	numRows := models.DeleteSurvei(idSurvei)
-	if numRows == 0 {
+	isDeleted := models.DeleteSurvei(idSurvei)
+	if isDeleted == false {
 		http.Error(w, "Gagal! Survei tidak ditemukan.", http.StatusBadRequest)
 		return
 	}

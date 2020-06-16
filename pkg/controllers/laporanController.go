@@ -95,8 +95,8 @@ func CreateTanggapan(w http.ResponseWriter, r *http.Request) {
 
 	laporan.TglTanggapan = time.Now().Format("2006-01-02")
 
-	numRows := models.CreateTanggapan(idLaporan, laporan)
-	if numRows == 0 {
+	isCreated := models.CreateTanggapan(idLaporan, laporan)
+	if isCreated == false {
 		http.Error(w, "Gagal! Laporan tidak ditemukan.", http.StatusBadRequest)
 		return
 	}

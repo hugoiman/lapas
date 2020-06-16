@@ -43,6 +43,7 @@ func main() {
 	api.HandleFunc("/survei-statistik-responden/{idSurvei}", controllers.GetStatistikResponden).Methods("GET")
 	api.HandleFunc("/survei-statistik-survei/{idSurvei}/{direktorat}", controllers.GetStatistikJawaban).Methods("GET")
 	api.HandleFunc("/survei-responden/{idSurvei}", mw.IsSDM(controllers.GetDataResponden)).Methods("GET")
+	api.HandleFunc("/survei-print/{idSurvei}", controllers.PrintSurvei).Methods("GET")
 
 	// Sub Survei
 	api.HandleFunc("/subsurvei", controllers.GetSubSurvei).Methods("GET")

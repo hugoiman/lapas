@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"crypto/sha1"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	models "lapas/pkg/models"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"gopkg.in/go-playground/validator.v9"
+	"gopkg.in/gomail.v2"
 )
 
 // GetUser is function
@@ -162,4 +164,27 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"message":"Password baru telah dikirim ke email pengguna."}`))
+}
+
+// SendEmail is func
+func SendEmail(subject, to, message string) {
+	var configSMTPHost = "smtp.gmail.com"
+	var configSMTPPort = 587
+	var configEmail = "nanonymoux@gmail.com"
+	var configPassword = "kudaponi10"
+
+	mailer := gomail.NewMessage()
+	mailer.SetHeader("From", configEmail)
+	mailer.SetHeader("To", to)
+	mailer.SetHeader("Subject", subject)
+	mailer.SetHeader("text/html", message)
+
+	dialer := gomail.NewDialer(configSMTPHost, configSMTPPort, configEmail, configPassword)
+	dialer.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+
+	err := dialer.DialAndSend(mailer)
+	if err != nil {
+		fmt.Println("errpor :", err.Error())
+	}
+
 }
