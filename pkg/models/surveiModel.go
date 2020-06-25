@@ -116,7 +116,7 @@ func CreateSurvei(survei Survei) (int, error) {
 }
 
 // DeleteSurvei is delete survei
-func DeleteSurvei(idSurvei string) int {
+func DeleteSurvei(idSurvei string) bool {
 	con := db.Connect()
 	query := "DELETE FROM survei WHERE idSurvei = ?"
 	res, _ := con.Exec(query, idSurvei)
@@ -125,7 +125,12 @@ func DeleteSurvei(idSurvei string) int {
 
 	defer con.Close()
 
-	return int(count)
+	if int(count) == 0 {
+		return false
+	}
+
+	return true
+
 }
 
 // UpdateSurvei is edit survei

@@ -16,7 +16,7 @@ type Disposisi struct {
 	Pemberi       string         `json:"pemberi"`
 	CreatedAt     string         `json:"createdAt"`
 	UpdatedAt     string         `json:"updatedAt"`
-	LaporanDispos []LaporanDispo `json:"laporan_dispo" validate:"required,dive"`
+	LaporanDispos []LaporanDispo `json:"laporan_dispo" validate:"required"`
 }
 
 // Disposisis is disposisi list
@@ -45,7 +45,7 @@ func GetDisposisi(idDisposisi string) (Disposisi, error) {
 		disposisi.UpdatedAt = updatedAt.(time.Time).Format("02 Jan 2006")
 	}
 
-	laporan := GetLaporanDispo(idDisposisi)
+	laporan := GetLaporanDispos(idDisposisi)
 	disposisi.LaporanDispos = laporan.LaporanDispos
 
 	defer con.Close()
@@ -82,7 +82,7 @@ func GetDispoSurat(idSurat string) Disposisis {
 
 	// Get laporan dispo
 	for k, v := range disposisis.Disposisis {
-		laporan := GetLaporanDispo(strconv.Itoa(v.IDDisposisi))
+		laporan := GetLaporanDispos(strconv.Itoa(v.IDDisposisi))
 		disposisis.Disposisis[k].LaporanDispos = laporan.LaporanDispos
 	}
 

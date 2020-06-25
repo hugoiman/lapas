@@ -101,6 +101,22 @@ func CreateDisposisi(w http.ResponseWriter, r *http.Request) {
 	} else if err := validator.New().Struct(disposisi); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
+	} else if len(disposisi.LaporanDispos) == 0 {
+		http.Error(w, "Gagal! Penerima harus diisi.", http.StatusBadRequest)
+		return
+	}
+
+	// jika bukan direksi -> cek apakah user pernah mendapat dan membuat disposisi pada surat tsb
+	// cek apakah user pernah membuat disposisi pada surat tsb
+	// jika direksi/sekretaris -> cek apakah surat sudah pernah didisposisikan
+
+	surat, err := models.GetSurat(strconv.Itoa(disposisi.IDSurat))
+	if err != nil {
+		http.Error(w, "Gagal! Surat tidak ditemukan.", http.StatusBadRequest)
+		return
+	} else if len(surat.Disposisis) == 0 && surat.IDPenerima != user.IDUser {
+		http.Error(w, "Gagal! Anda bukan penerima surat ini.", http.StatusForbidden)
+		return
 	}
 
 	var level = map[string]int{
@@ -139,6 +155,9 @@ func CreateDisposisi(w http.ResponseWriter, r *http.Request) {
 		if penerima.Nama == "" {
 			http.Error(w, "Gagal! Penerima tidak ditemukan.", http.StatusBadRequest)
 			return
+		} else if len(surat.Disposisis) != 0 && penerima.Divisi != user.Divisi {
+			http.Error(w, "Gagal! Penerima harus dari divisi yang sama.", http.StatusBadRequest)
+			return
 		} else if !penerima.Actived {
 			http.Error(w, "Gagal! Status penerima ("+penerima.Nama+") tidak aktif.", http.StatusBadRequest)
 			return
@@ -146,19 +165,6 @@ func CreateDisposisi(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Gagal! Tidak dapat mendisposisikan ke pangkat yg lebih tinggi atau setara.", http.StatusBadRequest)
 			return
 		}
-	}
-
-	// jika bukan direksi -> cek apakah user pernah mendapat dan membuat disposisi pada surat tsb
-	// cek apakah user pernah membuat disposisi pada surat tsb
-	// jika direksi/sekretaris -> cek apakah surat sudah pernah didisposisikan
-
-	surat, err := models.GetSurat(strconv.Itoa(disposisi.IDSurat))
-	if err != nil {
-		http.Error(w, "Gagal! Surat tidak ditemukan.", http.StatusBadRequest)
-		return
-	} else if len(surat.Disposisis) == 0 && surat.IDPenerima != user.IDUser {
-		http.Error(w, "Gagal! Anda bukan penerima surat ini.", http.StatusForbidden)
-		return
 	}
 
 	receiver := false
@@ -192,6 +198,7 @@ func CreateDisposisi(w http.ResponseWriter, r *http.Request) {
 		v.IDDisposisi = idDisposisi
 		v.Status = "Waiting"
 		models.InitialLaporanDispo(user.IDUser, v)
+		// Send Email
 	}
 
 	if len(surat.Disposisis) == 0 {

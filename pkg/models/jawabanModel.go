@@ -58,13 +58,32 @@ func UpdateJawaban(jawaban Jawaban) {
 // GetJawabans is func
 func GetJawabans(idSurvei, direktorat string) Jawabans {
 	con := db.Connect()
-	queryDirektorat := "SELECT a.idJawaban, a.idSoal, a.jawaban, c.subSurvei, d.nama FROM jawaban a JOIN soal b ON a.idSoal = b.idSoal JOIN subsurvei c ON b.idSub = c.idSub JOIN user d ON a.idUser = d.idUser WHERE b.idSurvei = ? AND d.direktorat = ?"
-	query := "SELECT a.idJawaban, a.idSoal, a.jawaban, c.subSurvei, d.nama FROM jawaban a JOIN soal b ON a.idSoal = b.idSoal JOIN subsurvei c ON b.idSub = c.idSub JOIN user d ON a.idUser = d.idUser WHERE b.idSurvei = ?"
+	queryDirektorat := "SELECT a.idJawaban, a.idSoal, a.jawaban, c.subSurvei FROM jawaban a JOIN soal b ON a.idSoal = b.idSoal JOIN subsurvei c ON b.idSub = c.idSub JOIN user d ON a.idUser = d.idUser WHERE b.idSurvei = ? AND d.direktorat = ?"
+	query := "SELECT a.idJawaban, a.idSoal, a.jawaban, c.subSurvei FROM jawaban a JOIN soal b ON a.idSoal = b.idSoal JOIN subsurvei c ON b.idSub = c.idSub JOIN user d ON a.idUser = d.idUser WHERE b.idSurvei = ?"
 	rows, _ := con.Query(query, idSurvei)
 
 	if direktorat != "semua" {
 		rows, _ = con.Query(queryDirektorat, idSurvei, direktorat)
 	}
+
+	jawaban := Jawaban{}
+	jawabans := Jawabans{}
+
+	for rows.Next() {
+		_ = rows.Scan(
+			&jawaban.IDJawaban, &jawaban.IDSoal, &jawaban.Jawaban, &jawaban.SubSurvei)
+		jawabans.Jawabans = append(jawabans.Jawabans, jawaban)
+	}
+
+	defer con.Close()
+	return jawabans
+}
+
+// GetAllJawaban is func
+func GetAllJawaban(idSurvei string) Jawabans {
+	con := db.Connect()
+	query := "SELECT a.idJawaban, a.idSoal, a.jawaban, c.subSurvei, d.nama FROM jawaban a JOIN soal b ON a.idSoal = b.idSoal JOIN subsurvei c ON b.idSub = c.idSub JOIN user d ON a.idUser = d.idUser WHERE b.idSurvei = ?"
+	rows, _ := con.Query(query, idSurvei)
 
 	jawaban := Jawaban{}
 	jawabans := Jawabans{}

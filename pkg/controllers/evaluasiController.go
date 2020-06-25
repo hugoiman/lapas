@@ -68,8 +68,8 @@ func UpdateEvaluasi(w http.ResponseWriter, r *http.Request) {
 
 	evaluasi.UpdatedAt = time.Now()
 
-	numRows := models.UpdateEvaluasi(idEvaluasi, evaluasi)
-	if numRows == 0 {
+	isDeleted := models.UpdateEvaluasi(idEvaluasi, evaluasi)
+	if isDeleted == false {
 		http.Error(w, "Gagal! survei atau id evaluasi tidak ditemukan.", http.StatusBadRequest)
 		return
 	}

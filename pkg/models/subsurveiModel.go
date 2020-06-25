@@ -43,7 +43,7 @@ func CreateSubSurvei(sub SubSurvei) {
 }
 
 // DeleteSubSurvei is update status delete
-func DeleteSubSurvei(idSub string) int {
+func DeleteSubSurvei(idSub string) bool {
 	con := db.Connect()
 	query := "UPDATE subsurvei SET deleted = 1 WHERE idSub = ?"
 	res, _ := con.Exec(query, idSub)
@@ -52,5 +52,9 @@ func DeleteSubSurvei(idSub string) int {
 
 	defer con.Close()
 
-	return int(count)
+	if int(count) == 0 {
+		return false
+	}
+
+	return true
 }

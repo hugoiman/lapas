@@ -13,6 +13,9 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 )
 
+// MySigningKey is signature
+var MySigningKey = mw.MySigningKey
+
 // Login is func
 func Login(w http.ResponseWriter, r *http.Request) {
 	var login models.Auth
@@ -47,9 +50,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(message)
 }
-
-// MySigningKey is signature
-var MySigningKey = mw.MySigningKey
 
 // MyClaims is credential
 type MyClaims = mw.MyClaims
