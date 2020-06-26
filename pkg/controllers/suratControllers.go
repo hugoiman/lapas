@@ -99,8 +99,9 @@ func CreateSurat(w http.ResponseWriter, r *http.Request) {
 	message := "<p><b>[New]</b> - Surat dari " + surat.Asal + " ke " + surat.Tujuan +
 		".<br>No: " + surat.Nomor +
 		".<br>Tanggal Surat: " + surat.TglSurat +
-		"<br>.Perihal: " + surat.Perihal + "</p>"
-	SendEmail(subject, penerima.Email, message)
+		".<br>Perihal: " + surat.Perihal + "</p>"
+	address := []string{penerima.Email}
+	SendEmail(subject, address, message)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -169,8 +170,9 @@ func UpdateSurat(w http.ResponseWriter, r *http.Request) {
 	message := "<p><b>[Updated]</b> - Surat dari " + surat.Asal + " ke " + surat.Tujuan +
 		".<br>No: " + surat.Nomor +
 		".<br>Tanggal Surat: " + surat.TglSurat +
-		"<br>.Perihal: " + surat.Perihal + "</p>"
-	SendEmail(subject, penerima.Email, message)
+		".<br>Perihal: " + surat.Perihal + "</p>"
+	address := []string{penerima.Email}
+	SendEmail(subject, address, message)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)

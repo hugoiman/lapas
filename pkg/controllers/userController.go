@@ -167,17 +167,23 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 // SendEmail is func
-func SendEmail(subject, to, message string) {
+func SendEmail(subject string, to []string, message string) {
 	var configSMTPHost = "smtp.gmail.com"
 	var configSMTPPort = 587
 	var configEmail = "nanonymoux@gmail.com"
 	var configPassword = "kudaponi10"
 
 	mailer := gomail.NewMessage()
+
+	addresses := make([]string, len(to))
+	for i := range addresses {
+		addresses[i] = mailer.FormatAddress(to[i], "")
+	}
+
 	mailer.SetHeader("From", configEmail)
-	mailer.SetHeader("To", to)
+	mailer.SetHeader("To", addresses...)
 	mailer.SetHeader("Subject", subject)
-	mailer.SetHeader("text/html", message)
+	mailer.SetBody("text/html", message)
 
 	dialer := gomail.NewDialer(configSMTPHost, configSMTPPort, configEmail, configPassword)
 	dialer.TLSConfig = &tls.Config{InsecureSkipVerify: true}

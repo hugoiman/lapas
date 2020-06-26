@@ -150,23 +150,6 @@ func CreateDisposisi(w http.ResponseWriter, r *http.Request) {
 		keys[penerima[v]] = true
 	}
 
-	for _, v := range disposisi.LaporanDispos {
-		penerima := models.GetUser(strconv.Itoa(v.IDPenerima))
-		if penerima.Nama == "" {
-			http.Error(w, "Gagal! Penerima tidak ditemukan.", http.StatusBadRequest)
-			return
-		} else if len(surat.Disposisis) != 0 && penerima.Divisi != user.Divisi {
-			http.Error(w, "Gagal! Penerima harus dari divisi yang sama.", http.StatusBadRequest)
-			return
-		} else if !penerima.Actived {
-			http.Error(w, "Gagal! Status penerima ("+penerima.Nama+") tidak aktif.", http.StatusBadRequest)
-			return
-		} else if (user.Divisi != "Sekretaris Perusahaan" && user.Job != "Direksi" && user.Job != "Direktur" && level[user.Pangkat] <= level[penerima.Pangkat]) || penerima.Job == "Direksi" || penerima.Job == "Direktur" {
-			http.Error(w, "Gagal! Tidak dapat mendisposisikan ke pangkat yg lebih tinggi atau setara.", http.StatusBadRequest)
-			return
-		}
-	}
-
 	receiver := false
 	for _, v := range surat.Disposisis {
 		if user.IDUser == v.IDPemberi {
@@ -189,6 +172,26 @@ func CreateDisposisi(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	addresses := []string{}
+	for _, v := range disposisi.LaporanDispos {
+		penerima := models.GetUser(strconv.Itoa(v.IDPenerima))
+		if penerima.Nama == "" {
+			http.Error(w, "Gagal! Penerima tidak ditemukan.", http.StatusBadRequest)
+			return
+		} else if len(surat.Disposisis) != 0 && penerima.Divisi != user.Divisi {
+			http.Error(w, "Gagal! Penerima harus dari divisi yang sama.", http.StatusBadRequest)
+			return
+		} else if !penerima.Actived {
+			http.Error(w, "Gagal! Status penerima ("+penerima.Nama+") tidak aktif.", http.StatusBadRequest)
+			return
+		} else if (user.Divisi != "Sekretaris Perusahaan" && user.Job != "Direksi" && user.Job != "Direktur" && level[user.Pangkat] <= level[penerima.Pangkat]) || penerima.Job == "Direksi" || penerima.Job == "Direktur" {
+			http.Error(w, "Gagal! Tidak dapat mendisposisikan ke pangkat yg lebih tinggi atau setara.", http.StatusBadRequest)
+			return
+		}
+
+		addresses = append(addresses, penerima.Email)
+	}
+
 	disposisi.IDPemberi = user.IDUser
 	disposisi.Status = "Waiting"
 	disposisi.CreatedAt = time.Now().Format("2006-01-02")
@@ -198,8 +201,14 @@ func CreateDisposisi(w http.ResponseWriter, r *http.Request) {
 		v.IDDisposisi = idDisposisi
 		v.Status = "Waiting"
 		models.InitialLaporanDispo(user.IDUser, v)
-		// Send Email
 	}
+	subject := "Disposisi Masuk"
+	message := "<p><b>[New]</b> - Disposisi dari " + user.Nama +
+		".<br>Surat dari " + surat.Asal + " ke " + surat.Tujuan +
+		".<br>No: " + surat.Nomor +
+		".<br>Tanggal Surat: " + surat.TglSurat +
+		".<br>Perihal: " + surat.Perihal + "</p>"
+	SendEmail(subject, addresses, message)
 
 	if len(surat.Disposisis) == 0 {
 		models.BeriStatusSurat(strconv.Itoa(disposisi.IDSurat), strconv.Itoa(user.IDUser), time.Now().Format("2006-01-02"), "Dispo")
