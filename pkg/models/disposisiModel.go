@@ -168,8 +168,8 @@ func GetMyDisposisis(idUser string) Surats {
 // CreateDisposisi is func
 func CreateDisposisi(disposisi Disposisi) int {
 	con := db.Connect()
-	exec, _ := con.Exec("INSERT INTO disposisi (idSurat, instruksi, status, pemberi, createdAt) VALUES (?,?,?,?,?)",
-		disposisi.IDSurat, disposisi.Instruksi, disposisi.Status, disposisi.Pemberi, disposisi.CreatedAt)
+	exec, _ := con.Exec("INSERT INTO disposisi (idSurat, instruksi, status, idPemberi, createdAt) VALUES (?,?,?,?,?)",
+		disposisi.IDSurat, disposisi.Instruksi, disposisi.Status, disposisi.IDPemberi, disposisi.CreatedAt)
 
 	idInt64, _ := exec.LastInsertId()
 	idDisposisi := int(idInt64)

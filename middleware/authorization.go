@@ -52,7 +52,7 @@ func RSurat(next http.HandlerFunc) http.HandlerFunc {
 func CUDSurat(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := context.Get(r, "user").(*MyClaims)
-		if user.Divisi != "Sekretaris Perusahaan" && user.Divisi == "Logistik & Administrasi" {
+		if user.Divisi != "Sekretaris Perusahaan" && user.Divisi != "Logistik & Administrasi" {
 			http.Error(w, "Gagal! Anda tidak diizinkan.", http.StatusForbidden)
 			return
 		}
